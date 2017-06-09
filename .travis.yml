@@ -23,7 +23,7 @@ install:
   - pip install coverage
 
 script:
-  - PYTHONPATH=ndr coverage run --source=ndr-server setup.py test
+  - PYTHONPATH=ndr coverage run --source=ndr_server setup.py test
 
 after_success:
   - codecov

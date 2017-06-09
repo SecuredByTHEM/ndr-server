@@ -1,0 +1,11 @@
+This directory has the files required to generate a SSL root certificate
+acceptable for use for testing and and enrolling your own server clients.
+
+This code expects CloudFlare SSL (https://github.com/cloudflare/cfssl) to be
+installed. An OCSP server *must* be available for testing purposes off the
+intermidate certificate
+
+Read the json files to set the certificate fields. By default this will
+generate all the root certificates, and an intermediate certificate for
+each one. If you need to issue a second intermediate, read the CFSSL
+documentation

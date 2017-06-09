@@ -1,0 +1,25 @@
+dist: trusty
+sudo: false
+
+language: python
+
+python:
+  - 3.5
+
+addons:
+  postgresql: "9.5"
+
+before_script:
+  - wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
+
+install:
+  - pip install codecov
+  - pip install coverage
+
+script:
+  - coverage run --source=ndr setup.py test
+#  - python3 setup.py test
+
+after_success:
+  - codecov
+

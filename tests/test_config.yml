@@ -1,0 +1,21 @@
+base_directory: /tmp/ndr-server
+
+smime:
+  cafile: /etc/ndr/ca.crt
+  mail_certfile: /etc/ndr/mail_cert.crt
+  mail_keyfile: /etc/ndr/mail_cert.key
+  
+postgresql:
+  host: localhost
+  dbname: ndr_test
+  user: ndr_ingest
+
+postgres_superuser:
+  user: postgres
+
+smtp:
+  disable: True
+  mail_from: test@example.com
+  smtp_host: localhost
+  smtp_username: ""
+  smtp_password: ""

@@ -1,0 +1,15 @@
+{
+    "CN": "NDR Server Test X1 OCSP Responder",
+    "key": {
+        "algo": "rsa",
+        "size": 4096
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "New York",
+            "O": "Secured By THEM",
+            "OU": "Secured By THEM Skunkworks"
+        }
+    ]
+}

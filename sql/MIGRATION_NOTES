@@ -1,0 +1,8 @@
+Migrations are handled by flyway to make things simple and easier. Objects that
+don't retain data such as views, and functions should be repeatable so the canonical
+definition can always be stored as a file.
+
+However, one hiccup exists. Flyway runs repeatable migrations in description order.
+Because stored procedures can require that a view requires due to postgresql typing
+system, views should always be ordered in the way they go into the system. There's
+probably more we need to do here, but this is a start for now

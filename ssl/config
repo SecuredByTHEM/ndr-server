@@ -1,0 +1,44 @@
+#!/bin/sh
+# Check for the utilities we'll need
+CFSSL=`which cfssl`
+CFSSLJSON=`which cfssljson`
+GOOSE=`which goose`
+
+CERT_ROOT="ca"
+JSON_ROOT="json"
+CFSSL_CONFIG="cfssl-config.json"
+
+# The Recorder root is used to issue S/MIME+client auth certificates for the purpose of
+# recorder identification and file uploads
+
+SQLITE_TEMPLATE="certstore_development.db"
+
+RECORDER_ROOT_JSON="$JSON_ROOT/recorder-root.json"
+RECORDER_ROOT_DIR="$CERT_ROOT/recorder-root"
+RECORDER_ROOT_KEY="$RECORDER_ROOT_DIR/ca-key.pem"
+RECORDER_ROOT_CERT="$RECORDER_ROOT_DIR/ca.pem"
+RECORDER_ROOT_DB_CONFIG="$RECORDER_ROOT_DIR/certs-db.json"
+RECORDER_ROOT_DB="$RECORDER_ROOT_DIR/certs.db"
+
+RECORDER_INTERMEDIATE_JSON="$JSON_ROOT/recorder-intermediate.json"
+RECORDER_INTERMEDIATE_DIR="$CERT_ROOT/recorder-intermediate"
+RECORDER_INTERMEDIATE_KEY="$RECORDER_INTERMEDIATE_DIR/intermediate-key.pem"
+RECORDER_INTERMEDIATE_CERT="$RECORDER_INTERMEDIATE_DIR/intermediate.pem"
+RECORDER_INTERMEDIATE_DB_CONFIG="$RECORDER_INTERMEDIATE_DIR/certs-db.json"
+RECORDER_INTERMEDIATE_DB="$RECORDER_INTERMEDIATE_DIR/certs.db"
+
+# The OCSP certificate is a leaf certificate, so no database here
+RECORDER_OCSP_JSON="$JSON_ROOT/recorder-ocsp.json"
+RECORDER_OCSP_DIR="$CERT_ROOT/recorder-ocsp"
+RECORDER_OCSP_KEY="$RECORDER_OCSP_DIR/ocsp-key.pem"
+RECORDER_OCSP_CERT="$RECORDER_OCSP_DIR/ocsp.pem"
+
+if [ -z $CFSSL ]; then
+    echo "cfssl not found, bailing out"
+    exit 1
+fi
+
+if [ -z $CFSSLJSON ]; then
+    echo "cfssljson not found, bailing out"
+    exit 1
+fi

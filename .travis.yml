@@ -16,13 +16,14 @@ before_script:
   - psql -f sql/users.sql ndr_test
   - psql -f sql/grants.sql ndr_test
   - flyway-4.2.0/flyway -url=jdbc:postgresql://localhost/ndr_test migrate
+  - git clone git@github.com:SecuredByTHEM/ndr.git
 
 install:
   - pip install codecov
   - pip install coverage
 
 script:
-  - coverage run --source=ndr-server setup.py test
+  - PYTHONPATH=ndr coverage run --source=ndr-server setup.py test
 
 after_success:
   - codecov

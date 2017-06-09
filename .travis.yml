@@ -16,7 +16,7 @@ before_script:
   - psql -f sql/users.sql ndr_test
   - psql -f sql/grants.sql ndr_test
   - flyway-4.2.0/flyway -url=jdbc:postgresql://localhost/ndr_test migrate
-  - git clone git@github.com:SecuredByTHEM/ndr.git
+  - git clone https://github.com/SecuredByTHEM/ndr.git
 
 install:
   - pip install codecov

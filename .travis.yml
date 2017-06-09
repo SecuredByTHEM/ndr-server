@@ -14,8 +14,8 @@ before_script:
   - tar zxvf flyway-commandline-4.2.0-linux-x64.tar.gz
   - psql -c 'create database ndr_test;' -U postgres
   - psql -f sql/users.sql ndr_test
-  - psql -f sql/grants.sql ndr_test
   - flyway-4.2.0/flyway -url=jdbc:postgresql://localhost/ndr_test migrate
+  - psql -f sql/grants.sql ndr_test
   - git clone https://github.com/SecuredByTHEM/ndr.git
 
 install:

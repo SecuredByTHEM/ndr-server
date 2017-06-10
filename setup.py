@@ -27,8 +27,11 @@ setup(
         'psycopg2',
         'pytz'
     ],
-    scripts=[
-        'bin/extract-smime-cert'
-    ],
+    entry_points={
+        'console_scripts': [
+            'ndr-ingest-server = ndr_server.tools.server:main',
+            'ndr-process-enlistments = ndr_server.tools.process_enlistment:main'
+        ]
+    },
     test_suite="tests"
 )

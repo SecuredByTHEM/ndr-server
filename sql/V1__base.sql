@@ -1,6 +1,12 @@
+CREATE USER ndr_ingest;
+
 CREATE SCHEMA IF NOT EXISTS network_scan;
 CREATE SCHEMA IF NOT EXISTS ingest;
 CREATE SCHEMA IF NOT EXISTS admin;
+
+GRANT USAGE ON SCHEMA ingest TO ndr_ingest;
+GRANT USAGE ON SCHEMA admin TO ndr_ingest;
+GRANT USAGE ON SCHEMA network_scan TO ndr_ingest;
 
 --
 -- Name: contact_type; Type: TYPE; Schema: public; Owner: -

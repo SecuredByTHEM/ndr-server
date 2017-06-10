@@ -13,9 +13,7 @@ before_script:
   - wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
   - tar zxvf flyway-commandline-4.2.0-linux-x64.tar.gz
   - psql -c 'create database ndr_test;' -U postgres
-  - psql -f sql/users.sql ndr_test
   - flyway-4.2.0/flyway -url=jdbc:postgresql://localhost/ndr_test migrate
-  - psql -f sql/grants.sql ndr_test
   - git clone https://github.com/SecuredByTHEM/ndr.git
 
 install:

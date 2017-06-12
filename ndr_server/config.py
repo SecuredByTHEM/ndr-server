@@ -37,6 +37,7 @@ class Config:
         # DB settings
         self.db_hostname = config_dict['postgresql']['host']
         self.db_username = config_dict['postgresql']['user']
+        self.db_password = config_dict['postgresql']['password']
         self.db_dbname = config_dict['postgresql']['dbname']
 
         # Mail server settings
@@ -86,10 +87,4 @@ class Config:
 
     def get_pg_connect_string(self):
         '''Returns the connection string required for pyschopg2'''
-        return "host='%s' dbname='%s' user='%s'" % (self.db_hostname, self.db_dbname, self.db_username)
-
-    def get_pg_superuser_connect_string(self):
-        '''Returns a connection string for the superuser for creating/dropping the database as a test user'''
-        return "host='%s' user='%s'" % (self.db_hostname, self.postgres_superuser)
-
-#"host='localhost' dbname='ndr' user='ndr_ingest'"
+        return "host='%s' dbname='%s' user='%s' password='%s'" % (self.db_hostname, self.db_dbname, self.db_username, self.db_password)

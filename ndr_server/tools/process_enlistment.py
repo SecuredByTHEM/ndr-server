@@ -115,8 +115,7 @@ def main():
             os.remove(enrollment_file)
             continue # Go to the next
 
-        local_install = True
-        local_certificate_handle = None
+        local_install = False
 
         if common_name == socket.gethostname():
             local = input("Certificate CN matches local hostname. Install certificates locally for server [Y/n]?")
@@ -126,6 +125,7 @@ def main():
                 if os.geteuid() != 0:
                     print("Not root, bailing out")
                     return
+                local_install = True
 
         # Start a transaction and create the organization and site if needed
         db_connection = nsc.database.get_connection()
@@ -174,6 +174,26 @@ def main():
                 f.write(cfssl_json['result']['certificate'])
                 db_connection.commit()
                 print("Database updated!")
+        else:
+            # Create a new signed message and send it back down the pipe
+            signed_csr_message = ndr.CertificateRequest(ncc)
+
+            # Populate the certificate chain and send it back
+            signed_csr_message.certificate = cfssl_json['result']['certificate']
+
+            # Load the intermediate certificate chain from the filesystem
+            with open(ncc.ssl_bundle, 'r') as f:
+                signed_csr_message.certificate_chain = f.read()
+
+            # Strictly speaking, we probably don't need to include the root certificate but it is
+            # handy for testing and debugging
+            with open(ncc.ssl_cafile, 'r') as f:
+                signed_csr_message.root_certificate = f.read()
+
+            signed_csr_message.destination = common_name
+            signed_csr_message.upload_method = 'uux'
+            signed_csr_message.sign_report()
+            signed_csr_message.load_into_queue()
 
         print("Removing", enrollment_file)
         os.remove(enrollment_file)

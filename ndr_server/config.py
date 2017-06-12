@@ -32,7 +32,7 @@ class Config:
         self.base_directory = config_dict['base_directory']
 
         # Ident settings
-        if "hostname" in config_dict['hostname']:
+        if "hostname" in config_dict:
             self.hostname = config_dict['hostname']
         else:
             self.hostname = socket.gethostname()

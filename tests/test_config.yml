@@ -9,9 +9,7 @@ postgresql:
   host: localhost
   dbname: ndr_test
   user: ndr_ingest
-
-postgres_superuser:
-  user: postgres
+  password:
 
 smtp:
   disable: True

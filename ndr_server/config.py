@@ -17,6 +17,8 @@
 
 '''NDR Server Configuration'''
 
+import socket
+
 import yaml
 import ndr_server
 
@@ -28,6 +30,12 @@ class Config:
             config_dict = yaml.safe_load(f)
 
         self.base_directory = config_dict['base_directory']
+
+        # Ident settings
+        if "hostname" in config_dict['hostname']:
+            self.hostname = config_dict['hostname']
+        else:
+            self.hostname = socket.gethostname()
 
         # S/MIME settings
         self.smime_ca = config_dict['smime']['cafile']

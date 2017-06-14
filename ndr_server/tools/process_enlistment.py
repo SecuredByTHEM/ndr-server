@@ -117,7 +117,7 @@ def main():
 
         local_install = False
 
-        if common_name == socket.gethostname():
+        if common_name == nsc.hostname:
             local = input("Certificate CN matches local hostname. Install certificates locally for server [Y/n]?")
             if not local or local.lower()[0] != 'n':
                 print("Checking we can write local certificates ...")
@@ -131,18 +131,21 @@ def main():
         db_connection = nsc.database.get_connection()
         cursor = db_connection.cursor()
 
-        if organization is None:
-            print("Creating organization", orgnaization_name)    
-            organization = ndr_server.Organization.create(nsc, orgnaization_name, db_connection)
+        if local_install is False:
+            if organization is None:
+                print("Creating organization", orgnaization_name)    
+                organization = ndr_server.Organization.create(nsc, orgnaization_name, db_connection)
 
-        if site is None:
-            print("Creating site", ou_name)
-            site = ndr_server.Site.create(nsc, organization, ou_name, db_connection)
+            if site is None:
+                print("Creating site", ou_name)
+                site = ndr_server.Site.create(nsc, organization, ou_name, db_connection)
 
-        # We try to create the recorder before the certificate in case of a CN collision
-        # If the CN collides, this will fail, and the transaction will rollback
-        print("Creating recorder ...")
-        recorder = ndr_server.Recorder.create(nsc, site, human_name, common_name, db_connection)
+            # We try to create the recorder before the certificate in case of a CN collision
+            # If the CN collides, this will fail, and the transaction will rollback
+            print("Creating recorder ...")
+            recorder = ndr_server.Recorder.create(nsc, site, human_name, common_name, db_connection)
+        else:
+            print("Skipping creation of database entries due to server install")
 
         print("Attempting to sign CSR ...")
 

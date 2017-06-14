@@ -193,7 +193,7 @@ def main():
 
             # We need to update the UUCP database before we're ready to send
             print("Updating UUCP database ...")
-            nsc.update_uucp_sys_file()
+            nsc.update_uucp_sys_file(db_conn=db_connection)
 
             signed_csr_message.destination = common_name
             signed_csr_message.upload_method = 'uux'

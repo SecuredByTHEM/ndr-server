@@ -25,9 +25,8 @@ import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
-TEST_UUCP_SYS = THIS_DIR + "/data/uucp_sys"
 
-class TestOrganizations(unittest.TestCase):
+class TestConfigClass(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Now load a global config object so the DB connection is open
@@ -67,8 +66,6 @@ class TestOrganizations(unittest.TestCase):
         self._nsc.update_uucp_sys_file()
 
         test_data = None
-        with open(TEST_UUCP_SYS, 'r') as f:
-            test_data = f.read()
 
         with open(self._nsc.uucp_sys_config, 'r') as f:
             written_config = f.read()

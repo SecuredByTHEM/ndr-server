@@ -18,18 +18,26 @@
 import unittest
 import os
 import logging
+import tempfile
 
 import psycopg2
 import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
+TEST_UUCP_SYS = THIS_DIR + "/data/uucp_sys"
 
 class TestOrganizations(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Now load a global config object so the DB connection is open
         cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
+
+        # UUCP file is written here for comparsion
+        fd, uucp_sys_test = tempfile.mkstemp()
+        os.close(fd) # Don't need to write anything to it
+
+        cls._nsc.uucp_sys_config = uucp_sys_test
 
         # For this specific test, we need to create a few test objects
         cls._test_org = ndr_server.Organization.create(
@@ -48,7 +56,20 @@ class TestOrganizations(unittest.TestCase):
             cls._nsc, cls._test_site, "Config Test Recorder 3", "cfg-test3"
         )
 
+    @classmethod
+    def tearDownClass(cls):
+        # Delete our temporary file
+        os.remove(cls._nsc.uucp_sys_config)
+
     def test_uucp_config(self):
         '''Tests updating of the UUCP configuration file'''
 
         self._nsc.update_uucp_sys_file()
+
+        test_data = None
+        with open(TEST_UUCP_SYS, 'r') as f:
+            test_data = f.read()
+
+        with open(self._nsc.uucp_sys_config, 'r') as f:
+            written_config = f.read()
+            self.assertEqual(test_data, written_config)

@@ -63,6 +63,8 @@ class Config:
         if "postgres_superuser" in config_dict:
             self.postgres_superuser = config_dict['postgres_superuser']['user']
 
+        self.uucp_sys_config = '/etc/uucp/sys'
+
         self.logger = logger
 
         # Initialize the database connection with this config so it's obtainable down the pipe
@@ -104,7 +106,7 @@ class Config:
         point in the near future, I need to modify UUCP to be able to read its configuration
         from a database'''
 
-        uucp_config_file = '\n'
+        uucp_config_file = ''
 
         # This is really horrid
         recorders_list = ndr_server.Recorder.get_all_recorder_names(self, db_conn=db_conn)
@@ -119,3 +121,6 @@ class Config:
         for recorder in recorders_list:
             uucp_config_file += "system " + recorder[0] + "\n"
             uucp_config_file += "protocol t\n"
+
+        with open(self.uucp_sys_config, 'w') as f:
+            f.write(uucp_config_file)

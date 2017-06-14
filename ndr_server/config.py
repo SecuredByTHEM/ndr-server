@@ -116,7 +116,7 @@ class Config:
         uucp_config_file += "protocol gvG\n"
         uucp_config_file += "protocol-parameter G packet-size 1024\n"
         uucp_config_file += "protocol-parameter G short-packets\n"
-        uucp_config_file += "remote-receive " + self.incoming_directory + self.enrollment_directory + "\n\n"
+        uucp_config_file += "remote-receive " + self.incoming_directory + " " + self.enrollment_directory + "\n\n"
 
         for recorder in recorders_list:
             uucp_config_file += "system " + recorder[0] + "\n"

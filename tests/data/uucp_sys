@@ -1,0 +1,11 @@
+protocol gvG
+protocol-parameter G packet-size 1024
+protocol-parameter G short-packets
+remote-receive /tmp/ndr-server/incoming/tmp/ndr-server/enrollment
+
+system cfg-test1
+protocol t
+system cfg-test2
+protocol t
+system cfg-test3
+protocol t

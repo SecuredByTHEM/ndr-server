@@ -43,6 +43,11 @@ class Database(object):
            is automatically created, and committed at the procedure. On an error, the
            transaction is automatically rolled back and the connection closed'''
 
+        cursor = self.run_procedure(proc, list_args, existing_db_conn)
+        return cursor.fetchone()
+
+    def run_procedure(self, proc, list_args, existing_db_conn=None):
+        '''Runs a stored procedure and returns a cursor to the result set'''
         try:
             if existing_db_conn is None:
                 db_conn = self.get_connection()
@@ -51,18 +56,17 @@ class Database(object):
 
             cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             cursor.callproc(proc, list_args)
-            results = cursor.fetchone()
 
             if existing_db_conn is None:
                 db_conn.commit()
                 self.connection.putconn(db_conn)
 
+            return cursor
+
         except psycopg2.Error:
             db_conn.rollback()
             self.connection.putconn(db_conn)
             raise
-
-        return results
 
     def close(self):
         self.connection.closeall()

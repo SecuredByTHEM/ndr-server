@@ -96,3 +96,26 @@ class Config:
     def get_pg_connect_string(self):
         '''Returns the connection string required for pyschopg2'''
         return "host='%s' dbname='%s' user='%s' password='%s'" % (self.db_hostname, self.db_dbname, self.db_username, self.db_password)
+
+    def update_uucp_sys_file(self, db_conn=None):
+        '''Updates the UUCP sys configuration file
+
+        This is a relatively horrid hack right now to allow us to use Taylor UUCP. At some
+        point in the near future, I need to modify UUCP to be able to read its configuration
+        from a database'''
+
+        uucp_config_file = '\n'
+
+        # This is really horrid
+        recorders_list = ndr_server.Recorder.get_all_recorder_names(self, db_conn=db_conn)
+
+        # The top of the file is a hardcoded for protocols we accept and use in general
+        # CHECKME: see if this is really necessary
+        uucp_config_file += "protocol gvG\n"
+        uucp_config_file += "protocol-parameter G packet-size 1024\n"
+        uucp_config_file += "protocol-parameter G short-packets\n"
+        uucp_config_file += "remote-receive " + self.incoming_directory + self.enrollment_directory + "\n\n"
+
+        for recorder in recorders_list:
+            uucp_config_file += "system " + recorder[0] + "\n"
+            uucp_config_file += "protocol t\n"

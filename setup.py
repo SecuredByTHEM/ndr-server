@@ -24,7 +24,7 @@ setup(
     install_requires=[
         'cryptography',
         'pyyaml',
-        'psycopg2',
+        'psycopg2 >= 2.7',
         'pytz'
     ],
     entry_points={

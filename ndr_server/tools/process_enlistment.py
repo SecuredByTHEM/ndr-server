@@ -175,8 +175,6 @@ def main():
             print("Installing the certificate bundle locally")
             with open(ncc.ssl_certfile, "w") as f:
                 f.write(cfssl_json['result']['certificate'])
-                db_connection.commit()
-                print("Database updated!")
         else:
             # Create a new signed message and send it back down the pipe
             signed_csr_message = ndr.CertificateRequest(ncc)
@@ -193,6 +191,10 @@ def main():
             with open(ncc.ssl_cafile, 'r') as f:
                 signed_csr_message.root_certificate = f.read()
 
+            # We need to update the UUCP database before we're ready to send
+            print("Updating UUCP database ...")
+            nsc.update_uucp_sys_file()
+
             signed_csr_message.destination = common_name
             signed_csr_message.upload_method = 'uux'
             signed_csr_message.sign_report()
@@ -200,6 +202,9 @@ def main():
 
         print("Removing", enrollment_file)
         os.remove(enrollment_file)
+
+        db_connection.commit()
+        print("Database updated!")
 
     print ("Done processing enrollments")
     return

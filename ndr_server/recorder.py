@@ -20,7 +20,9 @@
 import time
 import ndr_server
 
+
 class Recorder(object):
+
     '''Recorders are a system running the NDR package, and represent a source of data'''
 
     def __init__(self, config):
@@ -81,3 +83,10 @@ class Recorder(object):
 
         return Recorder.from_dict(config, config.database.run_procedure_fetchone(
             "ingest.select_recorder_by_hostname", [hostname], existing_db_conn=db_conn))
+
+    @staticmethod
+    def get_all_recorder_names(config, db_conn=None):
+        '''Returns a list of all recorder names in the database'''
+
+        return config.database.run_procedure(
+            "admin.get_all_recorder_names", [], existing_db_conn=db_conn)

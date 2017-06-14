@@ -1,2 +1,0 @@
-#!/bin/sh
-openssl smime -pk7out -in $1 | openssl pkcs7 -print_certs | openssl x509

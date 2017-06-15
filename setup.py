@@ -30,7 +30,8 @@ setup(
     entry_points={
         'console_scripts': [
             'ndr-ingest-server = ndr_server.tools.server:main',
-            'ndr-process-enlistments = ndr_server.tools.process_enlistment:main'
+            'ndr-process-enlistments = ndr_server.tools.process_enlistment:main',
+            'ndr-reboot-recorder = ndr_server.tools.reboot_recorder:main'
         ]
     },
     test_suite="tests"

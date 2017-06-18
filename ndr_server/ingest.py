@@ -21,6 +21,7 @@ import shutil
 import sys
 import glob
 import time
+import json
 
 import subprocess
 
@@ -176,19 +177,8 @@ class IngestServer():
                         storable_scan = ndr.NmapScan()
                         storable_scan.from_message(message)
 
-                        import json
                         scan_json = json.dumps(storable_scan.to_dict())
                         cursor.callproc("network_scan.import_scan", [log_id, scan_json])
-
-                        scan_id = cursor.fetchone()[0]
-
-                        cursor.callproc("network_scan.export_scan", [scan_id])
-                        db_loaded_json = cursor.fetchone()[0]
-
-                        db_scan = ndr.NmapScan()
-                        db_scan.from_dict(db_loaded_json)
-                        if db_scan.to_yaml() == storable_scan.to_yaml():
-                            self.logger.info("Successfully loaded scan from database")
 
                     elif message.message_type == ndr.IngestMessageTypes.SYSLOG_UPLOAD:
                         syslog = ndr.SyslogUploadMessage().from_message(

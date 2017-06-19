@@ -73,7 +73,7 @@ BEGIN
                     port_id bigint;
                     service json;
                     service_id bigint;
-                    host_port_services bigint;
+                    host_port_services_id bigint;
                 BEGIN
                     port_id := network_scan.insert_port_status(_host_id := host_id,
                                                                _portid := (port->>'portid')::text::integer,
@@ -104,7 +104,7 @@ BEGIN
                         -- And link this to the port
                         INSERT INTO network_scan.host_port_services (host_port_id, service_id, confidence)
                             VALUES (port_id, service_id, (service->>'confidence')::integer)
-                            RETURNING id INTO host_port_services;
+                            RETURNING id INTO host_port_services_id;
 
                         -- Load services CPE (if present)
                         IF service->>'cpes' IS NOT NULL THEN
@@ -143,7 +143,7 @@ BEGIN
                                 );
 
                                 INSERT INTO network_scan.host_port_script_outputs (host_port_id, script_output_id) VALUES
-                                    (port_id, script_output_id);
+                                    (host_port_services_id, script_output_id);
                             END;
                         END LOOP;
                     END IF; -- script_output

@@ -10,9 +10,10 @@ BEGIN
     -- REMINDER: I dropped the row for connecting the scan to a message
 
     -- Step 1: Create the top-level scan object
-    INSERT INTO network_scan.scans (msg_id, scan_type) VALUES (
+    INSERT INTO network_scan.scans (msg_id, scan_type, scan_target) VALUES (
         _msg_id,
-        (_scan_json->>'scan_type')::network_scan.scan_type
+        (_scan_json->>'scan_type')::network_scan.scan_type,
+        (_scan_json->>'scan_target')::cidr
     ) RETURNING id INTO scan_id;
 
     -- Step 2: Create hosts based on the scan; we'll tie them to the baseline later

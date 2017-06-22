@@ -163,7 +163,7 @@ class IngestServer():
                         organization = site.get_organization(db_connection)
                         alert_contacts = organization.get_contacts()
 
-                        test_alert_msg = ndr_server.AlertTemplate(
+                        test_alert_msg = ndr_server.TestAlertTemplate(
                             organization, site, recorder, message.generated_at
                         )
 

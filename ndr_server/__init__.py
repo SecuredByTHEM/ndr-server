@@ -23,4 +23,7 @@ from ndr_server.sites import Site
 from ndr_server.recorder import Recorder
 from ndr_server.ingest import IngestServer
 from ndr_server.nmap import NmapStorableScan
-from ndr_server.templates import AlertTemplate
+from ndr_server.templates import (
+    TestAlertTemplate,
+    UnknownMachineTemplate
+)

@@ -44,6 +44,12 @@ BEGIN
                     script_output_array json[];
                     cpes_array json[];
                 BEGIN
+                    -- If the port is not present (i.e., surface scans, simply exclude it)
+                    IF NOT FOUND THEN
+                        port_json_array := NULL;
+                        EXIT;
+                    END IF;
+
                     -- Grab the service information and append it
                     service_json := NULL;
                     SELECT * INTO service_row FROM network_scan.flattened_port_services WHERE host_port_id=port_row.host_port_id;
@@ -104,6 +110,12 @@ BEGIN
                     osclasses_json_array json[];
                     cpes_array json[];
                 BEGIN
+                    -- For some scans, we won't have osmatch information
+                    IF NOT FOUND THEN
+                        osmatches_json_array := NULL;
+                        EXIT;
+                    END IF;
+
                     -- OSClasses exist under osmatches (and ALSO have CPEs)
                     FOR osclass_row IN SELECT * FROM network_scan.flattened_host_osmatches_osclasses WHERE host_osmatch_id=osmatch_row.host_osmatch_id
                     LOOP
@@ -151,7 +163,8 @@ BEGIN
 
     scan_json := json_build_object(
         'hosts', host_json_array,
-        'scan_type', scan_row.scan_type 
+        'scan_type', scan_row.scan_type,
+        'scan_target', scan_row.scan_target
     );
 
     RETURN scan_json;

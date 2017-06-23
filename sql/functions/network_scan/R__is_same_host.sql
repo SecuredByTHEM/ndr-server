@@ -1,6 +1,6 @@
 -- Test function to determine if two hosts are in fact the same host.
 
-CREATE OR REPLACE FUNCTION network_scan.test_is_same_host(_host1_id bigint, _host2_id bigint)
+CREATE OR REPLACE FUNCTION network_scan.is_same_host(_host1_id bigint, _host2_id bigint)
     RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$

@@ -1,4 +1,6 @@
 -- Obsolete function for the first time I attempted this
+DROP FUNCTION IF EXISTS network_scan.find_hosts_not_in_baseline(_scan_id bigint);
+
 ALTER TABLE network_scan.hosts DROP COLUMN vendor CASCADE; -- Obsolete, belongs to mac_address
 
 -- Baseline hosts refer to if a host is expected, and how it should look in a given scan of a

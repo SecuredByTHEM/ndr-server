@@ -18,6 +18,8 @@
 import unittest
 import os
 import logging
+import tempfile
+import shutil
 
 import ndr_server
 import psycopg2
@@ -36,6 +38,11 @@ class TestIngests(unittest.TestCase):
         # Now load a global config object so the DB connection is open
         cls._nsc = ndr_server.Config(logging.getLogger(), TEST_CONFIG)
 
+        # We need to process test messages, so override the base directory for
+        # this test
+        cls._testdir = tempfile.mkdtemp()
+        cls._nsc.base_directory = cls._testdir
+
         # For this specific test, we need to create a few test objects
         cls._test_org = ndr_server.Organization.create(
             cls._nsc, "Ingest Recorders Org")
@@ -47,6 +54,7 @@ class TestIngests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls._nsc.database.close()
+        shutil.rmtree(cls._testdir)
 
     def ingest_test_file(self, filename):
         '''Simply feeds in the response for an ingest test'''
@@ -60,6 +68,17 @@ class TestIngests(unittest.TestCase):
         ingest_daemon.process_ingest_message(db_connection, self._recorder, file_contents)
         return ingest_daemon.process_ingest_message(
             db_connection, self._recorder, file_contents)
+
+    def test_incoming_directories_creation(self):
+        '''Confirms that we can successfully create the directories we need to process messages'''
+        ingest_daemon = ndr_server.IngestServer(self._nsc)
+        ingest_daemon.prep_ingest_directories()
+
+        self.assertTrue(os.path.isdir(self._nsc.accepted_directory))
+        self.assertTrue(os.path.isdir(self._nsc.incoming_directory))
+        self.assertTrue(os.path.isdir(self._nsc.reject_directory))
+        self.assertTrue(os.path.isdir(self._nsc.error_directory))
+        self.assertTrue(os.path.isdir(self._nsc.enrollment_directory))
 
     def test_nmap_ingest(self):
         '''Tests that an NMAP scan actually goes into the database'''

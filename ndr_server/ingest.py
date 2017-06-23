@@ -48,9 +48,9 @@ class IngestServer():
     def init_processing_directory(self, name, path):
         '''Creates processing directories for ingest'''
         if os.path.isdir(path) is False:
-            self.logger.warn("creating %s directory: %s",
-                             name,
-                             path)
+            self.logger.warning("creating %s directory: %s",
+                                name,
+                                path)
             os.makedirs(path)
         else:
             self.logger.debug("%s directory: %s", name, path)
@@ -154,7 +154,7 @@ class IngestServer():
                     check=False)
 
                 if ossl_verify_proc.returncode != 0:
-                    self.logger.warn(
+                    self.logger.warning(
                         "rejecting %s: %s", file, str(ossl_verify_proc.stderr))
                     # punt you off to the reject folder
                     shutil.move(file, self.config.reject_directory)

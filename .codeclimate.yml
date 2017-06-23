@@ -3,8 +3,8 @@ engines:
         enabled: true
         config:
             threshold: 'B'
-    pep8:
-        enabled: true
+#    pep8:
+#        enabled: true
 ratings:
     paths:
     - "**.py"

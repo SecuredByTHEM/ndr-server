@@ -1,0 +1,43 @@
+generated-at: Fri, 23 Jun 2017 18:15:53 -0000
+message-type: nmap_scan
+payload:
+  hosts:
+  - addr: 192.168.2.3
+    hostnames:
+    - hostname: windsor
+      type: PTR
+    mac_address: 84:39:BE:64:3F:E5
+    reason: arp-response
+    reason_ttl: 0
+    state: up
+    vendor: null
+  - addr: 192.168.2.1
+    hostnames:
+    - hostname: DD-WRT
+      type: PTR
+    mac_address: 40:16:7E:6C:04:92
+    reason: arp-response
+    reason_ttl: 0
+    state: up
+    vendor: Asustek Computer
+  - addr: 192.168.2.2
+    hostnames:
+    - hostname: perdtion
+      type: PTR
+    mac_address: null
+    reason: localhost-response
+    reason_ttl: 0
+    state: up
+    vendor: null
+  - addr: 192.168.2.145
+    hostnames:
+    - hostname: ndr-UvVbpSRAN6xzT69QzhPFaD3aonPZRyOV
+      type: PTR
+    mac_address: 08:00:27:5D:AB:CC
+    reason: arp-response
+    reason_ttl: 0
+    state: up
+    vendor: Oracle VirtualBox virtual NIC
+  scan_target: 192.168.2.0/24
+  scan_type: arp-discovery
+version: 1

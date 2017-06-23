@@ -23,8 +23,6 @@ import ndr_server
 import psycopg2
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-SCHEMA = THIS_DIR + "/../sql/schema.sql"
-GRANTS = THIS_DIR + "/../sql/grants.sql"
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
 
 
@@ -66,7 +64,7 @@ class TestSites(unittest.TestCase):
             self._nsc, "ndr_test3")
 
         self.assertEqual(recorder_orig, recorder_read)
-        
+
     def test_expect_on_bad_read(self):
         '''Tests database exception throwing'''
         self.assertRaises(psycopg2.InternalError,

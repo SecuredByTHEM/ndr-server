@@ -66,8 +66,7 @@ class TestIngests(unittest.TestCase):
         db_connection = self._nsc.database.get_connection()
 
         ingest_daemon.process_ingest_message(db_connection, self._recorder, file_contents)
-        return ingest_daemon.process_ingest_message(
-            db_connection, self._recorder, file_contents)
+        db_connection.commit()
 
     def test_incoming_directories_creation(self):
         '''Confirms that we can successfully create the directories we need to process messages'''
@@ -85,7 +84,7 @@ class TestIngests(unittest.TestCase):
         self.ingest_test_file(NMAP_ARP_SCAN)
 
     def test_syslog_ingest(self):
-        '''Tests that an NMAP scan actually goes into the database'''
+        '''Tests that an syslog ingest actually goes into the database'''
         self.ingest_test_file(SYSLOG_SCAN)
 
     def test_alert_tester(self):

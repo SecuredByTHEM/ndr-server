@@ -106,12 +106,10 @@ class IngestServer():
                 )
 
         elif message.message_type == ndr.IngestMessageTypes.NMAP_SCAN:
-            # Deserialize the scan back into a usable object
-            storable_scan = ndr.NmapScan()
-            storable_scan.from_message(message)
-
-            scan_json = json.dumps(storable_scan.to_dict())
-            cursor.callproc("network_scan.import_scan", [log_id, scan_json])
+            network_scan = ndr_server.NetworkScan.create_from_message(
+                self.config, log_id, message, db_connection
+            )
+            print(network_scan.pg_id)
 
         elif message.message_type == ndr.IngestMessageTypes.SYSLOG_UPLOAD:
             syslog = ndr.SyslogUploadMessage().from_message(

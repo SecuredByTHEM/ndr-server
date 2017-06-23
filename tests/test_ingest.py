@@ -22,12 +22,12 @@ import tempfile
 import shutil
 
 import ndr_server
-import psycopg2
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
 NMAP_ARP_SCAN = THIS_DIR + "/data/ingest/nmap_arp_scan.yml"
 SYSLOG_SCAN = THIS_DIR + "/data/ingest/syslog_upload.yml"
+TEST_ALERT_MESSAGE = THIS_DIR + "/data/ingest/test_alert.yml"
 
 class TestIngests(unittest.TestCase):
     '''Tests various ingest cases'''
@@ -87,6 +87,10 @@ class TestIngests(unittest.TestCase):
     def test_syslog_ingest(self):
         '''Tests that an NMAP scan actually goes into the database'''
         self.ingest_test_file(SYSLOG_SCAN)
+
+    def test_alert_tester(self):
+        '''Tests the Alert Test Message'''
+        self.ingest_test_file(TEST_ALERT_MESSAGE)
 
 if __name__ == '__main__':
     unittest.main()

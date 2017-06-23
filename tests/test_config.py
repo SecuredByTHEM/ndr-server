@@ -31,6 +31,7 @@ class TestConfigClass(unittest.TestCase):
     def setUpClass(cls):
         # Now load a global config object so the DB connection is open
         cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
+        cls._db_connection = cls._nsc.database.get_connection()
 
         # UUCP file is written here for comparsion
         fd, uucp_sys_test = tempfile.mkstemp()
@@ -40,30 +41,32 @@ class TestConfigClass(unittest.TestCase):
 
         # For this specific test, we need to create a few test objects
         cls._test_org = ndr_server.Organization.create(
-            cls._nsc, "Testing Config Org")
+            cls._nsc, "Testing Config Org", db_conn=cls._db_connection)
         cls._test_site = ndr_server.Site.create(
-            cls._nsc, cls._test_org, "Testing Config Site")
+            cls._nsc, cls._test_org, "Testing Config Site", db_conn=cls._db_connection)
 
         # Make a couple of test recorders
         ndr_server.Recorder.create(
-            cls._nsc, cls._test_site, "Config Test Recorder 1", "cfg-test1"
+            cls._nsc, cls._test_site, "Config Test Recorder 1", "cfg-test1", db_conn=cls._db_connection
         )
         ndr_server.Recorder.create(
-            cls._nsc, cls._test_site, "Config Test Recorder 2", "cfg-test2"
+            cls._nsc, cls._test_site, "Config Test Recorder 2", "cfg-test2", db_conn=cls._db_connection
         )
         ndr_server.Recorder.create(
-            cls._nsc, cls._test_site, "Config Test Recorder 3", "cfg-test3"
+            cls._nsc, cls._test_site, "Config Test Recorder 3", "cfg-test3", db_conn=cls._db_connection
         )
 
     @classmethod
     def tearDownClass(cls):
+        cls._db_connection.rollback()
+
         # Delete our temporary file
         os.remove(cls._nsc.uucp_sys_config)
 
     def test_uucp_config(self):
         '''Tests updating of the UUCP configuration file'''
 
-        self._nsc.update_uucp_sys_file()
+        self._nsc.update_uucp_sys_file(db_conn=self._db_connection)
 
         test_data = None
 

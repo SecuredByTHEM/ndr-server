@@ -92,9 +92,9 @@ class IngestServer():
 
         if message.message_type == ndr.IngestMessageTypes.TEST_ALERT:
             # Get the organization so we can determine what emails we need to send
-            site = recorder.get_site(db_connection)
-            organization = site.get_organization(db_connection)
-            alert_contacts = organization.get_contacts()
+            site = recorder.get_site(db_conn=db_connection)
+            organization = site.get_organization(db_conn=db_connection)
+            alert_contacts = organization.get_contacts(db_conn=db_connection)
 
             test_alert_msg = ndr_server.TestAlertTemplate(
                 organization, site, recorder, message.generated_at
@@ -107,7 +107,7 @@ class IngestServer():
 
         elif message.message_type == ndr.IngestMessageTypes.NMAP_SCAN:
             network_scan = ndr_server.NetworkScan.create_from_message(
-                self.config, log_id, message, db_connection
+                self.config, log_id, message, db_conn=db_connection
             )
             print(network_scan.pg_id)
 

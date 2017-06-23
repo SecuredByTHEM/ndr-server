@@ -35,7 +35,10 @@ class TestSites(unittest.TestCase):
         cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
 
         # For this specific test, we need to create a few test objects
-        cls._test_org = ndr_server.Organization.create(cls._nsc, "Testing Sites")
+        cls._db_connection = cls._nsc.database.get_connection()
+        cls._test_org = ndr_server.Organization.create(
+            cls._nsc, "Testing Sites", db_conn=cls._db_connection
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -43,13 +46,17 @@ class TestSites(unittest.TestCase):
 
     def test_create(self):
         '''Create an organization and make sure the procedural SQL don't go bang'''
-        ndr_server.Site.create(self._nsc, self._test_org, "Test 1")
+        ndr_server.Site.create(self._nsc, self._test_org, "Test 1", db_conn=self._db_connection)
 
     def test_read_by_id(self):
         '''We need to create a new ID so we know the pg_id from the insert and can read it back'''
-        first_site = ndr_server.Site.create(self._nsc, self._test_org, "Test 2")
+        first_site = ndr_server.Site.create(
+            self._nsc, self._test_org, "Test 2", db_conn=self._db_connection
+        )
+
         read_site = ndr_server.Site.read_by_id(
-            self._nsc, first_site.pg_id)
+            self._nsc, first_site.pg_id, db_conn=self._db_connection
+        )
 
         self.assertEqual(first_site, read_site)
 

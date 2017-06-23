@@ -42,17 +42,20 @@ class TestIngests(unittest.TestCase):
         # this test
         cls._testdir = tempfile.mkdtemp()
         cls._nsc.base_directory = cls._testdir
+        cls._db_connection = cls._nsc.database.get_connection()
 
         # For this specific test, we need to create a few test objects
         cls._test_org = ndr_server.Organization.create(
-            cls._nsc, "Ingest Recorders Org")
+            cls._nsc, "Ingest Recorders Org", db_conn=cls._db_connection)
         cls._test_site = ndr_server.Site.create(
-            cls._nsc, cls._test_org, "Ingest Recorders Site")
+            cls._nsc, cls._test_org, "Ingest Recorders Site", db_conn=cls._db_connection)
         cls._recorder = ndr_server.Recorder.create(
-            cls._nsc, cls._test_site, "Test Recorder", "ndr_test_ingest")
+            cls._nsc, cls._test_site, "Test Recorder", "ndr_test_ingest",
+            db_conn=cls._db_connection)
 
     @classmethod
     def tearDownClass(cls):
+        cls._db_connection.rollback()
         cls._nsc.database.close()
         shutil.rmtree(cls._testdir)
 
@@ -63,10 +66,8 @@ class TestIngests(unittest.TestCase):
             file_contents = scanfile.read()
 
         ingest_daemon = ndr_server.IngestServer(self._nsc)
-        db_connection = self._nsc.database.get_connection()
 
-        ingest_daemon.process_ingest_message(db_connection, self._recorder, file_contents)
-        db_connection.commit()
+        ingest_daemon.process_ingest_message(self._db_connection, self._recorder, file_contents)
 
     def test_incoming_directories_creation(self):
         '''Confirms that we can successfully create the directories we need to process messages'''

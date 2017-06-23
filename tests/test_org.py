@@ -32,20 +32,22 @@ class TestOrganizations(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
+        cls._db_connection = cls._nsc.database.get_connection()
 
     @classmethod
     def tearDownClass(cls):
+        cls._db_connection.rollback()
         cls._nsc.database.close()
 
     def test_create(self):
         '''Create an organization and make sure the procedural SQL don't go bang'''
-        ndr_server.Organization.create(self._nsc, "Test 1")
+        ndr_server.Organization.create(self._nsc, "Test 1", db_conn=self._db_connection)
 
     def test_read_by_id(self):
         '''We need to create a new ID so we know the pg_id from the insert and can read it back'''
-        first_org = ndr_server.Organization.create(self._nsc, "Test 2")
+        first_org = ndr_server.Organization.create(self._nsc, "Test 2", db_conn=self._db_connection)
         read_org = ndr_server.Organization.read_by_id(
-            self._nsc, first_org.pg_id)
+            self._nsc, first_org.pg_id, db_conn=self._db_connection)
 
         self.assertEqual(first_org, read_org)
 
@@ -58,18 +60,19 @@ class TestOrganizations(unittest.TestCase):
         '''Retrieves all the contacts for a given organization'''
 
         # Create a new contact to all the goodness
-        contact_org = ndr_server.Organization.create(self._nsc, "Contact Organization")
+        contact_org = ndr_server.Organization.create(
+            self._nsc, "Contact Organization", db_conn=self._db_connection)
 
         # Now make some contacts and load them to this organization
         contact1 = ndr_server.Contact.create(
-            self._nsc, contact_org, "email", "mcasadevall@them.com")
+            self._nsc, contact_org, "email", "michaelc@them.com", db_conn=self._db_connection)
         contact2 = ndr_server.Contact.create(
-            self._nsc, contact_org, "email", "davidm@them.com")
+            self._nsc, contact_org, "email", "davidm@them.com", db_conn=self._db_connection)
 
         # Everything should be committed, retrieve all the contacts, and make sure
         # we can find both contacts
 
-        contact_list = contact_org.get_contacts()
+        contact_list = contact_org.get_contacts(db_conn=self._db_connection)
         self.assertEqual(len(contact_list), 2)
         self.assertIn(contact1, contact_list)
         self.assertIn(contact2, contact_list)

@@ -31,37 +31,43 @@ class TestSites(unittest.TestCase):
     def setUpClass(cls):
         # Now load a global config object so the DB connection is open
         cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
+        cls._db_connection = cls._nsc.database.get_connection()
 
         # For this specific test, we need to create a few test objects
         cls._test_org = ndr_server.Organization.create(
-            cls._nsc, "Testing Recorders Org")
+            cls._nsc, "Testing Recorders Org", db_conn=cls._db_connection)
         cls._test_site = ndr_server.Site.create(
-            cls._nsc, cls._test_org, "Testing Recorders Site")
+            cls._nsc, cls._test_org, "Testing Recorders Site", db_conn=cls._db_connection)
 
     @classmethod
     def tearDownClass(cls):
+        cls._db_connection.rollback()
         cls._nsc.database.close()
 
     def test_create(self):
         '''Create an recorder and make sure the procedural SQL don't go bang'''
-        recorder = ndr_server.Recorder.create(
-            self._nsc, self._test_site, "Test Recorder", "ndr_test")
+        ndr_server.Recorder.create(self._nsc, self._test_site, "Test Recorder", "ndr_test",
+                                   db_conn=self._db_connection)
 
     def test_read_by_id(self):
         '''We need to create a new ID so we know the pg_id from the insert and can read it back'''
         recorder_orig = ndr_server.Recorder.create(
-            self._nsc, self._test_site, "Test Recorder 2", "ndr_test2")
+            self._nsc, self._test_site, "Test Recorder 2", "ndr_test2",
+            db_conn=self._db_connection)
+
         recorder_read = ndr_server.Recorder.read_by_id(
-            self._nsc, recorder_orig.pg_id)
+            self._nsc, recorder_orig.pg_id, db_conn=self._db_connection)
 
         self.assertEqual(recorder_orig, recorder_read)
 
     def test_read_by_hostname(self):
         '''Once again, we test a CRUD operation by hostname'''
         recorder_orig = ndr_server.Recorder.create(
-            self._nsc, self._test_site, "Test Recorder 2", "ndr_test3")
+            self._nsc, self._test_site, "Test Recorder 2", "ndr_test3",
+            db_conn=self._db_connection)
+
         recorder_read = ndr_server.Recorder.read_by_hostname(
-            self._nsc, "ndr_test3")
+            self._nsc, "ndr_test3", db_conn=self._db_connection)
 
         self.assertEqual(recorder_orig, recorder_read)
 

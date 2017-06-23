@@ -23,19 +23,19 @@ import psycopg2
 import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-SCHEMA = THIS_DIR + "/../sql/schema.sql"
-GRANTS = THIS_DIR + "/../sql/grants.sql"
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
 
 
-class TestOrganizations(unittest.TestCase):
+class TestContacts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Now load a global config object so the DB connection is open
         cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
+        cls._db_connection = cls._nsc.database.get_connection()
 
         # For this specific test, we need to create a few test objects
-        cls._test_org = ndr_server.Organization.create(cls._nsc, "Test Contacts")
+        cls._test_org = ndr_server.Organization.create(cls._nsc, "Test Contacts",
+                                                       db_conn=cls._db_connection)
 
     @classmethod
     def tearDownClass(cls):
@@ -44,13 +44,16 @@ class TestOrganizations(unittest.TestCase):
     def test_create(self):
         '''Create an organization and make sure the procedural SQL don't go bang'''
         ndr_server.Contact.create(
-            self._nsc, self._test_org, "email", "mcasadevall@them.com")
+            self._nsc, self._test_org, "email", "mcasadevall@them.com",
+            db_conn=self._db_connection)
 
     def test_get_by_id(self):
         '''Tests getting contacts by ID'''
         orig_contact = ndr_server.Contact.create(
-            self._nsc, self._test_org, "email", "mcasadevall2@them.com")
-        retrieved_contact = ndr_server.Contact.get_by_id(self._nsc, orig_contact.pg_id)
+            self._nsc, self._test_org, "email", "mcasadevall2@them.com",
+            db_conn=self._db_connection)
+        retrieved_contact = ndr_server.Contact.get_by_id(self._nsc, orig_contact.pg_id,
+                                                         db_conn=self._db_connection)
 
         self.assertEqual(orig_contact, retrieved_contact)
         self.assertEqual(retrieved_contact.method, ndr_server.ContactMethods.EMAIL)

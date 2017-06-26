@@ -109,7 +109,6 @@ class IngestServer():
             network_scan = ndr_server.NetworkScan.create_from_message(
                 self.config, log_id, message, db_conn=db_connection
             )
-            print(network_scan.pg_id)
 
         elif message.message_type == ndr.IngestMessageTypes.SYSLOG_UPLOAD:
             syslog = ndr.SyslogUploadMessage().from_message(

@@ -140,6 +140,7 @@ BEGIN
 
     -- Now that we have all the bits, assembly the host object
     RETURN json_build_object(
+        'pg_id', host_address.host_id,
         'addr', host_address.ip_address,
         'mac_address', host_address.mac_address,
         'vendor', host_address.vendor,

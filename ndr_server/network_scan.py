@@ -44,3 +44,32 @@ class NetworkScan(object):
             existing_db_conn=db_conn)[0]
 
         return net_scan
+
+    def get_unknown_hosts_from_scan(self, db_conn=None):
+        '''Determines what hosts are unknown'''
+
+        unknown_host_ids = self.config.database.run_procedure_fetchone(
+            "network_scan.return_hosts_not_in_baseline", [self.pg_id],
+            existing_db_conn=db_conn)[0]
+
+        # See if we have anything unknown in the scan
+        if unknown_host_ids is None:
+            return None
+
+        # Poop, we need to retrieve the hosts from the database. While we have the hosts in our
+        # scan, we don't have the pg_ids (an easy performance tweak is to get these as part as the
+        # import)
+
+        unknown_host_objs = []
+        for host_id in unknown_host_ids:
+            host_dict = self.config.database.run_procedure_fetchone(
+                "network_scan.export_host", [host_id],
+                existing_db_conn=db_conn)[0]
+
+            # Convert the JSON to a host dict
+            import pprint
+            pprint.pprint(host_dict)
+            host_obj = ndr.NmapHost.from_dict(host_dict)
+            unknown_host_objs.append(host_obj)
+
+        return unknown_host_objs

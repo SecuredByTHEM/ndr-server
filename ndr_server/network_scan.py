@@ -67,9 +67,14 @@ class NetworkScan(object):
                 existing_db_conn=db_conn)[0]
 
             # Convert the JSON to a host dict
-            import pprint
-            pprint.pprint(host_dict)
             host_obj = ndr.NmapHost.from_dict(host_dict)
             unknown_host_objs.append(host_obj)
 
         return unknown_host_objs
+
+    @staticmethod
+    def add_host_to_baseline(config, host_pg_id, db_conn=None):
+        '''Adds a host to the baseline so it's known from this point forward'''
+        config.database.run_procedure(
+            "network_scan.add_host_to_baseline", [host_pg_id],
+            existing_db_conn=db_conn)

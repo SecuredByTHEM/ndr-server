@@ -11,5 +11,6 @@ CREATE TABLE network_scan.baseline_hosts (
 	id bigserial NOT NULL PRIMARY KEY,
 	site_id bigint NOT NULL REFERENCES sites (id),
     scan_type network_scan.scan_type NOT NULL,
-	host_id bigint NOT NULL REFERENCES network_scan.hosts (id)
+	host_id bigint NOT NULL REFERENCES network_scan.hosts (id),
+	UNIQUE (host_id)
 );

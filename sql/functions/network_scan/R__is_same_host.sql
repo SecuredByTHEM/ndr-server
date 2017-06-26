@@ -23,6 +23,15 @@ BEGIN
         RAISE EXCEPTION 'Host 2 with ID % not found', _host2_id;
     END IF;
 
+    -- Special case: if the reason is 'localhost-response', it's considered a match because we're
+    -- looking at ourselves. localhost-response doesn't include the MAC addresses in the scan
+    
+    IF host1_row.reason = 'localhost-response'
+       AND host2_row.reason = 'localhost-response'
+    THEN
+        RETURN TRUE;
+    END IF;
+
     -- Currently, hosts are considered identical if they have the same MAC address. This needs
     -- to be expanded at some point to be somewhat smarter but as a basic building block it
     -- will do

@@ -20,6 +20,7 @@ import os
 import logging
 import tempfile
 import shutil
+import time
 
 import ndr
 import ndr_server
@@ -28,6 +29,8 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
 NMAP_ARP_SCAN = THIS_DIR + "/data/ingest/nmap_arp_scan.yml"
 SYSLOG_SCAN = THIS_DIR + "/data/ingest/syslog_upload.yml"
+
+EXPECTED_OUTPUT_UNKNOWN_HOST = THIS_DIR + "/data/expected_outputs/unknown_host"
 
 class TestIngests(unittest.TestCase):
     '''Tests various ingest cases'''
@@ -116,6 +119,27 @@ class TestIngests(unittest.TestCase):
 
         final_scan = self.load_network_scan(NMAP_ARP_SCAN)
         self.assertIsNone(net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection))
+
+    def test_message_notifications(self):
+        '''Tests the behavior of test notifications for scan results'''
+
+        # We've done this before
+        net_scan = self.load_network_scan(NMAP_ARP_SCAN)
+        unk_host_objs = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
+        self.assertEqual(len(unk_host_objs), 4)
+
+        fake_timestamp = 1498548342
+
+        msg = ndr_server.UnknownMachineTemplate(
+            self._test_org, self._test_site, self._recorder, unk_host_objs, fake_timestamp
+        ).prepped_message()
+
+        # Because the order is not promised by the database, we need to make sure that the
+        # essential lines are there.
+
+        self.assertIn("MAC Address: 40:16:7e:6c:04:92", msg)
+        self.assertIn("Manufacturer: Asustek Computer", msg)
+        self.assertIn("Detection Method: arp-response", msg)
 
 if __name__ == '__main__':
     unittest.main()

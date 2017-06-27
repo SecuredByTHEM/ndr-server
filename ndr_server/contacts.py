@@ -24,6 +24,7 @@ import tempfile
 import os
 import subprocess
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 class Contact(object):
     '''Contacts represent people we reach when shit hits the fan. Contacts are currently attached
@@ -107,7 +108,18 @@ class Contact(object):
             return
 
         if self.config.smime_enabled is True:
+            # OpenSSL will generate the message headers
             message = self.sign_email(subject, message)
+        else:
+            # We need to generate the message headers
+            mime_msg = MIMEMultipart()
+            mime_msg['From'] = self.config.mail_from
+            mime_msg['To'] = self.value
+            mime_msg['Subject'] = subject
+            body = message
+            mime_msg.attach(MIMEText(body, 'plain'))
+
+            message = mime_msg.as_string()
 
         # And send it on its way
         self.config.logger.info("Sending message to %s", self.value)

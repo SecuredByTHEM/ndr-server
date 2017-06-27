@@ -68,14 +68,7 @@ class Contact(object):
         return Contact.from_dict(config, config.database.run_procedure_fetchone(
             "admin.select_contact_by_id", [contact_id], existing_db_conn=db_conn))
 
-    def send_message(self, subject, message):
-        '''Sends an alert message'''
-
-        if self.config.smtp_disabled:
-            self.config.logger.info("Would send message to %s", self.value)
-            # Mail is disabled, just return
-            return
-
+    def sign_email(self, subject, message):
         # Sign the message
         try:
             msg_fd, unsigned_msg_file = tempfile.mkstemp()
@@ -103,12 +96,25 @@ class Contact(object):
                 os.close(msg_fd)
             os.remove(unsigned_msg_file)
 
+        return signed_message
+
+    def send_message(self, subject, message):
+        '''Sends an alert message'''
+
+        if self.config.smtp_disabled:
+            self.config.logger.info("Would send message to %s", self.value)
+            # Mail is disabled, just return
+            return
+
+        if self.config.smime_enabled is True:
+            message = self.sign_email(subject, message)
+
         # And send it on its way
         self.config.logger.info("Sending message to %s", self.value)
         smtp_server = smtplib.SMTP(self.config.smtp_host)
         smtp_server.starttls()
         smtp_server.login(self.config.smtp_username, self.config.smtp_password)
-        smtp_server.sendmail(self.config.mail_from, self.value, signed_message)
+        smtp_server.sendmail(self.config.mail_from, self.value, message)
         smtp_server.quit()
 
 class ContactMethods(Enum):

@@ -38,6 +38,7 @@ class Config:
             self.hostname = socket.gethostname()
 
         # S/MIME settings
+        self.smime_enabled = config_dict['smime']['enabled']
         self.smime_ca = config_dict['smime']['cafile']
         self.smime_mail_certfile = config_dict['smime']['mail_certfile']
         self.smime_mail_private_key = config_dict['smime']['mail_keyfile']

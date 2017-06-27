@@ -47,9 +47,9 @@ The Secured By THEM Team
 
 You are recieving this message because you are a designated alert contact for $org_name. To be removed from future alert contacts, contact us to be removed from the alert list.
 
-All messages from Secured By THEM are digitially signed with S/MIME authethication, for more information, please see please check https://securedbythem.com/genuine-message. If this watermark is missing, this message may be a forgery. If so, please contact as soon as possible. 
+All messages from Secured By THEM are digitially signed with S/MIME authethication, for more information, please see please check https://securedbythem.com/genuine-message. If this watermark is missing, this message may be a forgery. If so, please contact as soon as possible.
 
-If either you, or an employee at Secured By THEM requested an alert test then you can delete this message safely. If not, please contact us immediately at +1-917-716-2585 at any time day or night to review and verify recent activity detected by your Network Data Recorder. You may also contact us by replying to this email.
+For more information, please contact us at +1-917-716-2585 at any time day or night to review and verify recent activity detected by your Network Data Recorder. You may also contact us by replying to this email.
 '''
 
     def replace_tokens(self, text):
@@ -103,7 +103,7 @@ class UnknownMachineTemplate(BaseTemplate):
         if len(hosts) == 1:
             self.subject_text = "ALERT: Unknown Machine Detected At $site_name"
         else:
-            self.pural_subject_text = "ALERT: Unknown Machine Detected At $site_name"
+            self.subject_text = "ALERT: Unknown Machines Detected At $site_name"
 
         self.hosts = hosts
         self.machine_info = '''

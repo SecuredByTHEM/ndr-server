@@ -113,7 +113,8 @@ class Contact(object):
         self.config.logger.info("Sending message to %s", self.value)
         smtp_server = smtplib.SMTP(self.config.smtp_host)
         smtp_server.starttls()
-        smtp_server.login(self.config.smtp_username, self.config.smtp_password)
+        if self.config.smtp_username is not None:
+            smtp_server.login(self.config.smtp_username, self.config.smtp_password)
         smtp_server.sendmail(self.config.mail_from, self.value, message)
         smtp_server.quit()
 

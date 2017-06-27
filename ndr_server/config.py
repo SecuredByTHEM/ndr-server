@@ -56,13 +56,8 @@ class Config:
 
         self.mail_from = config_dict['smtp']['mail_from']
         self.smtp_host = config_dict['smtp']['smtp_host']
-        self.smtp_username = config_dict['smtp']['smtp_username']
-        self.smtp_password = config_dict['smtp']['smtp_password']
-
-        # Used for testing, postgres superuser
-        self.postgres_superuser = None
-        if "postgres_superuser" in config_dict:
-            self.postgres_superuser = config_dict['postgres_superuser']['user']
+        self.smtp_username = config_dict['smtp'].get('smtp_username', None)
+        self.smtp_password = config_dict['smtp'].get('smtp_password', None)
 
         self.uucp_sys_config = '/etc/uucp/sys'
 

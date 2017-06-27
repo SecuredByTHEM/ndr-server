@@ -48,7 +48,7 @@ class Site(object):
         return site
 
     def get_organization(self, db_conn=None):
-        return ndr_server.Organization.read_by_id(self.config, self.org_id, db_conn=None)
+        return ndr_server.Organization.read_by_id(self.config, self.org_id, db_conn=db_conn)
 
     @staticmethod
     def read_by_id(config, site_id, db_conn=None):

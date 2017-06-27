@@ -1,0 +1,111 @@
+generated-at: Fri, 23 Jun 2017 18:51:57 -0000
+message-type: syslog_upload
+payload:
+- log:
+  - facility: syslog
+    host: localhost
+    message: Configuration reload request received, reloading configuration;
+    pid: 339
+    priority: notice
+    program: syslog-ng
+    timestamp: '1491867002'
+  - facility: authpriv
+    host: localhost
+    message: 'pam_unix(cron:session): session closed for user root'
+    pid: 5945
+    priority: info
+    program: CRON
+    timestamp: '1491867002'
+  - facility: mail
+    host: localhost
+    message: 'E5F176072D: uid=0 from=<root>'
+    pid: 5925
+    priority: info
+    program: postfix/pickup
+    timestamp: '1491867002'
+  - facility: mail
+    host: localhost
+    message: 'E5F176072D: message-id=<20170410233002.E5F176072D@perdition>'
+    pid: 5996
+    priority: info
+    program: postfix/cleanup
+    timestamp: '1491867002'
+  - facility: mail
+    host: localhost
+    message: 'E5F176072D: from=<root@perdition>, size=701, nrcpt=1 (queue active)'
+    pid: 699
+    priority: info
+    program: postfix/qmgr
+    timestamp: '1491867002'
+  - facility: mail
+    host: localhost
+    message: 'E5F176072D: to=<root@perdition>, orig_to=<root>, relay=local, delay=0.07,
+      delays=0.04/0.01/0/0.01, dsn=2.0.0, status=sent (delivered to mailbox)'
+    pid: 5998
+    priority: info
+    program: postfix/local
+    timestamp: '1491867002'
+  - facility: mail
+    host: localhost
+    message: 'E5F176072D: removed'
+    pid: 699
+    priority: info
+    program: postfix/qmgr
+    timestamp: '1491867002'
+  - facility: authpriv
+    host: localhost
+    message: 'pam_unix(cron:session): session opened for user uucp by (uid=0)'
+    pid: 6087
+    priority: info
+    program: CRON
+    timestamp: '1491869281'
+  - facility: cron
+    host: localhost
+    message: (uucp) CMD (   [ -x /usr/lib/uucp/uudemon.hr ] && /usr/lib/uucp/uudemon.hr)
+    pid: 6088
+    priority: info
+    program: CRON
+    timestamp: '1491869281'
+  - facility: authpriv
+    host: localhost
+    message: 'pam_unix(cron:session): session closed for user uucp'
+    pid: 6087
+    priority: info
+    program: CRON
+    timestamp: '1491869282'
+  - facility: authpriv
+    host: localhost
+    message: 'pam_unix(cron:session): session opened for user root by (uid=0)'
+    pid: 6117
+    priority: info
+    program: CRON
+    timestamp: '1491869821'
+  - facility: cron
+    host: localhost
+    message: (root) CMD (   cd / && run-parts --report /etc/cron.hourly)
+    pid: 6118
+    priority: info
+    program: CRON
+    timestamp: '1491869821'
+  - facility: authpriv
+    host: localhost
+    message: 'pam_unix(cron:session): session closed for user root'
+    pid: 6117
+    priority: info
+    program: CRON
+    timestamp: '1491869821'
+  - facility: authpriv
+    host: localhost
+    message: 'pam_unix(cron:session): session opened for user root by (uid=0)'
+    pid: 6146
+    priority: info
+    program: CRON
+    timestamp: '1491870601'
+  - facility: cron
+    host: localhost
+    message: (root) CMD (/usr/sbin/logrotate -f /etc/ndr/logrotate-ndr.conf )
+    pid: 6147
+    priority: info
+    program: CRON
+    timestamp: '1491870601'
+version: 1

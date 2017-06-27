@@ -63,14 +63,13 @@ class Organization(object):
         return Organization.from_dict(config, config.database.run_procedure_fetchone(
             "admin.select_organization_by_name", [org_name], existing_db_conn=db_conn))
 
-    def get_contacts(self):
+    def get_contacts(self, db_conn=None):
         '''Gets alert contacts for an organization'''
-        with self.config.database.get_connection() as db_conn:
-            cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.callproc("admin.get_contacts_for_organization", [self.pg_id])
+        cursor = self.config.database.run_procedure("admin.get_contacts_for_organization",
+                                                    [self.pg_id], existing_db_conn=db_conn)
 
-            contacts = []
-            for record in cursor.fetchall():
-                contacts.append(ndr_server.Contact.from_dict(self.config, record))
+        contacts = []
+        for record in cursor.fetchall():
+            contacts.append(ndr_server.Contact.from_dict(self.config, record))
 
         return contacts

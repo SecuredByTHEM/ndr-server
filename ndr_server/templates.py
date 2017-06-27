@@ -92,11 +92,7 @@ class TestAlertTemplate(BaseTemplate):
         self.subject_text = "ALERT: Recorder $recorder_human_name Is Testing Alerts"
         self.message = '''The recorder $recorder_human_name at site $site_name installed for $org_name has issued a test alert message to confirm the functionality of Secured By THEM's automated alert messages. This message was generated at $time.
 
-As part of this alert test, please verify that this message is properly signed as an authentic message by Secured By THEM. All messages sent by us use industry standard S/MIME message signing to confirm authenticity. In most email clients, this will show up in the form of a message such as "This message is digitally signed", or a small ribbon appearing in the corner of the message.
-
-For more details, please check https://securedbythem.com/genuine-message. If this watermark is missing, this message may be a forgery. If so, please contact as soon as possible. 
-
-If either you, or an employee at Secured By THEM requested an alert test then you can delete this message safely. If not, please contact us immediately at +1-917-716-2585 at any time day or night to review and verify recent activity detected by your Network Data Recorder. You may also contact us by replying to this email.
+As part of this alert test, please verify that this message is properly signed as an authentic message by Secured By THEM. See below for more details.
 '''
 
 class UnknownMachineTemplate(BaseTemplate):

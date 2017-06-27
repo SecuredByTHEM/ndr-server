@@ -66,11 +66,12 @@ class Contact(object):
 
     @classmethod
     def get_by_id(cls, config, contact_id, db_conn=None):
+        '''Gets a contact by email'''
         return Contact.from_dict(config, config.database.run_procedure_fetchone(
             "admin.select_contact_by_id", [contact_id], existing_db_conn=db_conn))
 
     def sign_email(self, subject, message):
-        # Sign the message
+        '''Signs an email with an S/MIME certificate'''
         try:
             msg_fd, unsigned_msg_file = tempfile.mkstemp()
             os.write(msg_fd, bytes(message, 'utf-8'))
@@ -102,11 +103,6 @@ class Contact(object):
     def send_message(self, subject, message):
         '''Sends an alert message'''
 
-        if self.config.smtp_disabled:
-            self.config.logger.info("Would send message to %s", self.value)
-            # Mail is disabled, just return
-            return
-
         if self.config.smime_enabled is True:
             # OpenSSL will generate the message headers
             message = self.sign_email(subject, message)
@@ -121,15 +117,27 @@ class Contact(object):
 
             message = mime_msg.as_string()
 
-        # And send it on its way
-        self.config.logger.info("Sending message to %s", self.value)
-        smtp_server = smtplib.SMTP(self.config.smtp_host)
-        smtp_server.starttls()
-        if self.config.smtp_username is not None:
-            smtp_server.login(self.config.smtp_username, self.config.smtp_password)
-        smtp_server.sendmail(self.config.mail_from, self.value, message)
-        smtp_server.quit()
+        if self.method == ContactMethods.EMAIL:
+            if self.config.smtp_disabled:
+                self.config.logger.info("Would send message to %s", self.value)
+                # Mail is disabled, just return
+                return
 
+            # And send it on its way
+            self.config.logger.info("Sending message to %s", self.value)
+            smtp_server = smtplib.SMTP(self.config.smtp_host)
+            smtp_server.starttls()
+            if self.config.smtp_username is not None:
+                smtp_server.login(self.config.smtp_username, self.config.smtp_password)
+            smtp_server.sendmail(self.config.mail_from, self.value, message)
+            smtp_server.quit()
+
+        elif self.method == ContactMethods.FILE:
+            with open(self.value, 'w') as contact_file:
+                contact_file.write(message)
+        else:
+            raise ValueError('Unknown contact method!')
 class ContactMethods(Enum):
     '''Known methods to contact folks'''
     EMAIL = "email"
+    FILE = "file" # Writes the message to a file, used for testing

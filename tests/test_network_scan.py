@@ -56,9 +56,18 @@ class TestIngests(unittest.TestCase):
             self._nsc, self._test_site, "Test Recorder", "ndr_test_ingest",
             db_conn=self._db_connection)
 
+        # We need a test file contact
+        file_descriptor, self._test_contact = tempfile.mkstemp()
+        os.close(file_descriptor) # Don't need to write anything to it
+
+        ndr_server.Contact.create(
+            self._nsc, self._test_org, "file", self._test_contact,
+            db_conn=self._db_connection)
+
     def tearDown(self):
         self._db_connection.rollback()
         self._nsc.database.close()
+        os.remove(self._test_contact)
 
     def load_network_scan(self, file_path):
         '''Loads a network scan'''
@@ -75,6 +84,7 @@ class TestIngests(unittest.TestCase):
         log_id = cursor.fetchone()[0]
 
         net_scan = ndr_server.NetworkScan.create_from_message(self._nsc,
+                                                              self._recorder,
                                                               log_id,
                                                               message,
                                                               db_conn=self._db_connection)
@@ -140,6 +150,23 @@ class TestIngests(unittest.TestCase):
         self.assertIn("MAC Address: 40:16:7e:6c:04:92", msg)
         self.assertIn("Manufacturer: Asustek Computer", msg)
         self.assertIn("Detection Method: arp-response", msg)
+
+    def test_do_alerting(self):
+        '''Tests the alerting functionality of the scan results'''
+
+        # Oh look, we need to do this AGAIN
+        net_scan = self.load_network_scan(NMAP_ARP_SCAN)
+        net_scan.do_alerting(db_conn=self._db_connection)
+
+        # Now read in the alert test file and see what we see
+        with open(self._test_contact, 'r') as f:
+            alert_contents = f.read()
+
+        # Like before, let's make sure we have the essentials there
+        self.assertIn("MAC Address: 40:16:7e:6c:04:92", alert_contents)
+        self.assertIn("Manufacturer: Asustek Computer", alert_contents)
+        self.assertIn("Detection Method: arp-response", alert_contents)
+
 
 if __name__ == '__main__':
     unittest.main()

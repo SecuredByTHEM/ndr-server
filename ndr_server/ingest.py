@@ -107,8 +107,9 @@ class IngestServer():
 
         elif message.message_type == ndr.IngestMessageTypes.NMAP_SCAN:
             network_scan = ndr_server.NetworkScan.create_from_message(
-                self.config, log_id, message, db_conn=db_connection
+                self.config, recorder, log_id, message, db_conn=db_connection
             )
+            network_scan.do_alerting(db_conn=db_connection)
 
         elif message.message_type == ndr.IngestMessageTypes.SYSLOG_UPLOAD:
             syslog = ndr.SyslogUploadMessage().from_message(

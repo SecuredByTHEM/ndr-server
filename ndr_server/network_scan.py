@@ -19,6 +19,13 @@
 import json
 
 import ndr
+import ndr_server
+
+DISCOVERY_SCAN_TYPES = [
+    ndr.NmapScanTypes.ARP_DISCOVERY,
+    ndr.NmapScanTypes.ND_DISCOVERY,
+    ndr.NmapScanTypes.IPV6_LINK_LOCAL_DISCOVERY
+]
 
 class NetworkScan(object):
     '''Network Scans represent data in the database, and handling of scan differences'''
@@ -27,16 +34,20 @@ class NetworkScan(object):
         self.pg_id = None
         self.db_connection = None
         self.config = config
+        self.recorder = None
         self.nmap_scan = None
+        self.message = None
 
     @classmethod
-    def create_from_message(cls, config, log_id, message, db_conn=None):
+    def create_from_message(cls, config, recorder, log_id, message, db_conn=None):
         '''Creates a NetworkScan object from the database'''
         storable_scan = ndr.NmapScan()
         storable_scan.from_message(message)
 
         net_scan = NetworkScan(config)
+        net_scan.recorder = recorder
         net_scan.nmap_scan = storable_scan
+        net_scan.message = message
 
         scan_json = json.dumps(storable_scan.to_dict())
         net_scan.pg_id = config.database.run_procedure_fetchone(
@@ -44,6 +55,30 @@ class NetworkScan(object):
             existing_db_conn=db_conn)[0]
 
         return net_scan
+
+    def do_alerting(self, db_conn=None):
+        '''Raises any alerts based on the type of scan it is'''
+
+        # For the time being, we only do alerting for discovery scans.
+        if self.nmap_scan.scan_type in DISCOVERY_SCAN_TYPES:
+            unknown_hosts = self.get_unknown_hosts_from_scan(db_conn)
+
+            # Get the necessary bits of info required to send alerts
+            site = self.recorder.get_site(db_conn=db_conn)
+            organization = site.get_organization(db_conn=db_conn)
+            alert_contacts = organization.get_contacts(db_conn=db_conn)
+
+            # Generate the alert message
+            msg = ndr_server.UnknownMachineTemplate(
+                organization, site, self.recorder, unknown_hosts, self.message.generated_at
+            )
+
+            alert_contacts = organization.get_contacts(db_conn=db_conn)
+
+            for contact in alert_contacts:
+                contact.send_message(
+                    msg.subject(), msg.prepped_message()
+                )
 
     def get_unknown_hosts_from_scan(self, db_conn=None):
         '''Determines what hosts are unknown'''

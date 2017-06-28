@@ -62,6 +62,9 @@ class NetworkScan(object):
         # For the time being, we only do alerting for discovery scans.
         if self.nmap_scan.scan_type in DISCOVERY_SCAN_TYPES:
             unknown_hosts = self.get_unknown_hosts_from_scan(db_conn)
+            if unknown_hosts is None:
+                # We know evertyhing
+                return
 
             # Get the necessary bits of info required to send alerts
             site = self.recorder.get_site(db_conn=db_conn)

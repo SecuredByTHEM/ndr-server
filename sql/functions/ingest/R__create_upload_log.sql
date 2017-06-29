@@ -28,6 +28,9 @@ DECLARE
         
         INSERT INTO recorder_messages(recorder_id, message_type, generated_at, received_at) VALUES 
             (recorder, upload_type, TO_TIMESTAMP(generated_at_unix_ts), NOW()) RETURNING id INTO rec_msg_id;
+
+        -- Also update the last seen date for recorders
+        UPDATE recorders SET last_seen = NOW() WHERE id = recorder;
         RETURN rec_msg_id;
     END;
 $$;

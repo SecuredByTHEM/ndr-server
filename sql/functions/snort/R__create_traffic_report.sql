@@ -3,17 +3,17 @@
 -- Many of the fields can be NULL, so keep that in mind while reading this code.
 
 CREATE OR REPLACE FUNCTION snort.create_traffic_report(_message_id bigint,
-                                                       _dst inet,
-                                                       _dst_port int,
                                                        _src inet,
-                                                       _src_port int,
-                                                       _eth_src macaddr,
-                                                       _eth_dst macaddr,
+                                                       _srcport int,
+                                                       _dst inet,
+                                                       _dstport int,
+                                                       _ethsrc macaddr,
+                                                       _ethdst macaddr,
                                                        _proto network_scan.port_protocol,
-                                                       _rx_packets bigint,
-                                                       _tx_packets bigint,
-                                                       _firstseen_ts bigint)
-    RETURNS bigint
+                                                       _rxpackets bigint,
+                                                       _txpackets bigint,
+                                                       _firstseen_ts numeric)
+    RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
     DECLARE
@@ -28,8 +28,8 @@ CREATE OR REPLACE FUNCTION snort.create_traffic_report(_message_id bigint,
         src_ip_address_id := network_scan.get_or_create_ip_address(_src);
         dst_ip_address_id := network_scan.get_or_create_ip_address(_dst);
 
-        src_mac_address_id := network_scan.get_or_create_mac_address(_eth_src);
-        dst_mac_address_id := network_scan.get_or_create_mac_address(_eth_dst);
+        src_mac_address_id := network_scan.get_or_create_mac_address(_ethsrc, NULL);
+        dst_mac_address_id := network_scan.get_or_create_mac_address(_ethdst, NULL);
 
         -- Technically, we could create port identifiers, but for the moment, I'm going to keep these seperate
         -- as the network scan doesn't handle source/destination port information.
@@ -45,21 +45,20 @@ CREATE OR REPLACE FUNCTION snort.create_traffic_report(_message_id bigint,
             proto,
             rxpackets,
             txpackets,
-            first_seen
+            firstseen
         ) VALUES (
             _message_id,
             dst_ip_address_id,
-            _dst_port,
+            _dstport,
             src_ip_address_id,
-            _src_port,
+            _srcport,
             src_mac_address_id,
             dst_mac_address_id,
             _proto,
-            _rx_packets,
-            _tx_packets,
+            _rxpackets,
+            _txpackets,
             TO_TIMESTAMP(_firstseen_ts)
-        ) RETURNING id AS traffic_log_id;
+        );
 
-        RETURN traffic_log_id;
     END;
 $$;

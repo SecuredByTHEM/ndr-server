@@ -2,18 +2,19 @@
 -- IP/MAC addressess
 
 CREATE SCHEMA IF NOT EXISTS snort;
+GRANT USAGE ON SCHEMA snort TO ndr_ingest;
 
 CREATE TABLE snort.traffic_reports (
-    id bigint PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     msg_id bigint REFERENCES public.recorder_messages(id), 
     dst bigint REFERENCES network_scan.ip_addresses(id),
-    dst_port int,
+    dstport int,
     src bigint REFERENCES network_scan.ip_addresses(id),
-    src_port int,
-    eth_src_id bigint REFERENCES network_scan.mac_addresses(id),
-    eth_dst_id bigint REFERENCES network_scan.mac_addresses(id),
+    srcport int,
+    ethsrc_id bigint REFERENCES network_scan.mac_addresses(id),
+    ethdst_id bigint REFERENCES network_scan.mac_addresses(id),
     proto network_scan.port_protocol,
-    rx_packets bigint NOT NULL,
-    tx_packets bigint NOT NULL,
-    first_seen timestamp without time zone NOT NULL
+    rxpackets bigint NOT NULL,
+    txpackets bigint NOT NULL,
+    firstseen timestamp without time zone NOT NULL
 )

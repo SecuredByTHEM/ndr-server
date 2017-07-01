@@ -32,7 +32,6 @@ class NetworkScan(object):
 
     def __init__(self, config):
         self.pg_id = None
-        self.db_connection = None
         self.config = config
         self.recorder = None
         self.nmap_scan = None

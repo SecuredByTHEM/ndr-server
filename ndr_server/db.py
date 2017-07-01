@@ -69,4 +69,5 @@ class Database(object):
             raise
 
     def close(self):
+        '''Cleans up and closes the database connection'''
         self.connection.closeall()

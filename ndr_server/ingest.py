@@ -125,6 +125,13 @@ class IngestServer():
                                  log_entry.host,
                                  log_entry.facility.value,
                                  log_entry.message])
+        elif message.message_type == ndr.IngestMessageTypes.SNORT_TRAFFIC:
+            ndr_server.TrafficLog.create_from_message(
+                self.config, recorder, log_id, message, db_conn=db_connection
+            )
+
+        else:
+            raise ValueError("Unknown message type!")
 
     def message_processing_loop(self):
         '''Runs the main processing loop for messages'''

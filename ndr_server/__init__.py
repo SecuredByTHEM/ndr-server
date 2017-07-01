@@ -26,3 +26,6 @@ from ndr_server.templates import (
     TestAlertTemplate,
     UnknownMachineTemplate
 )
+from ndr_server.snort import (
+    TrafficLog
+)

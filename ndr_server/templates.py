@@ -142,3 +142,28 @@ This alert will repeat once every four hours until the machine is either whiteli
             site_name=self.site.name,
             time=self.time_str
         )
+
+class RecorderAlertMessage(BaseTemplate):
+    '''Template used when alerts are sent'''
+    def __init__(self, organization, site, recorder, event_time, program, alert):
+        BaseTemplate.__init__(self, organization, site, recorder, event_time)
+        self.program = program
+        self.alert = alert
+
+        self.subject_text = "ALERT: $program On Recorder $recorder_human_name Has Raised An Alert"
+        self.message = '''The recorder $recorder_human_name at site $site_name installed for $org_name has raised an alert for $program. The alert is as follows:
+
+$alert
+'''
+
+    def replace_tokens(self, text):
+        '''Does additional token replacement for unknown machines'''
+        base_template = string.Template(text)
+        return base_template.substitute(
+            alert=self.alert,
+            program=self.program,
+            recorder_human_name=self.recorder.human_name,
+            org_name=self.organization.name,
+            site_name=self.site.name,
+            time=self.time_str
+        )

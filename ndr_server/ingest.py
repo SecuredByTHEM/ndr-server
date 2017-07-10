@@ -90,6 +90,7 @@ class IngestServer():
                                                      message.generated_at])
         log_id = cursor.fetchone()[0]
 
+        # Alert messages
         if message.message_type == ndr.IngestMessageTypes.TEST_ALERT:
             # Get the organization so we can determine what emails we need to send
             site = recorder.get_site(db_conn=db_connection)
@@ -105,12 +106,34 @@ class IngestServer():
                     test_alert_msg.subject(), test_alert_msg.prepped_message()
                 )
 
+        # Generic alert messages
+        elif message.message_type == ndr.IngestMessageTypes.ALERT_MSG:
+            # Get the message deserialized
+            alert_msg = ndr.AlertMessage().from_message(message)
+
+            site = recorder.get_site(db_conn=db_connection)
+            organization = site.get_organization(db_conn=db_connection)
+            alert_contacts = organization.get_contacts(db_conn=db_connection)
+
+            test_alert_msg = ndr_server.RecorderAlertMessage(
+                organization, site, recorder, message.generated_at,
+                alert_msg.raised_by, alert_msg.contents
+            )
+
+            for contact in alert_contacts:
+                contact.send_message(
+                    test_alert_msg.subject(), test_alert_msg.prepped_message()
+                )
+
+
+        # NMAP Scan
         elif message.message_type == ndr.IngestMessageTypes.NMAP_SCAN:
             network_scan = ndr_server.NetworkScan.create_from_message(
                 self.config, recorder, log_id, message, db_conn=db_connection
             )
             network_scan.do_alerting(db_conn=db_connection)
 
+        # Syslog Upload
         elif message.message_type == ndr.IngestMessageTypes.SYSLOG_UPLOAD:
             syslog = ndr.SyslogUploadMessage().from_message(
                 message)
@@ -125,6 +148,8 @@ class IngestServer():
                                  log_entry.host,
                                  log_entry.facility.value,
                                  log_entry.message])
+
+        # SNORT Traffic
         elif message.message_type == ndr.IngestMessageTypes.SNORT_TRAFFIC:
             ndr_server.TrafficLog.create_from_message(
                 self.config, recorder, log_id, message, db_conn=db_connection

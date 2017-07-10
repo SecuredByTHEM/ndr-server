@@ -120,6 +120,12 @@ class IngestServer():
                 alert_msg.raised_by, alert_msg.contents
             )
 
+            # Record the message for history reasons
+            cursor.callproc("alert.record_alert_msg",
+                            [log_id,
+                             alert_msg.raised_by,
+                             alert_msg.contents])
+
             for contact in alert_contacts:
                 contact.send_message(
                     test_alert_msg.subject(), test_alert_msg.prepped_message()

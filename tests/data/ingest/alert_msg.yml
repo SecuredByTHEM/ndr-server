@@ -1,0 +1,8 @@
+generated-at: Fri, 07 Jul 2017 00:44:34 -0000
+message-type: alert_msg
+payload:
+  contents: '[1:42130:1] BLACKLIST DNS request for known malware domain update.winappupdater.com
+    - Win.Trojan.Ismdoor [Classification: A Network Trojan was detected] [Priority:
+    1] {UDP} 192.168.2.2:34093 -> 192.168.2.1:53'
+  raised_by: snort
+version: 1

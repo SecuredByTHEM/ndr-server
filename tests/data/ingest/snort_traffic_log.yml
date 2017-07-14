@@ -3,23 +3,19 @@ message-type: snort_traffic
 payload:
   consolated_traffic:
   - dst: 192.168.2.3
-    dstport: null
     ethdst: 84:39:BE:64:3F:E5
     ethsrc: 30:85:A9:3C:9D:99
     firstseen: 1496064021.995733
     proto: icmp
     rxpackets: 1
     src: 192.168.2.2
-    srcport: null
     txpackets: 1
   - dst: 192.168.2.3
-    dstport: 22
     ethdst: 84:39:BE:64:3F:E5
     ethsrc: 30:85:A9:3C:9D:99
     firstseen: 1496059576.746527
     proto: tcp
     rxpackets: 40
     src: 192.168.2.2
-    srcport: 58724
     txpackets: 48
 version: 1

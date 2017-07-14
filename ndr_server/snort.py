@@ -44,14 +44,12 @@ class TrafficLog(object):
         traffic_log.pg_id = log_id
 
         # Uploaded logs only have consolated traffic, and not the full traffic entries
-        for traffic_entry in ingest_log.consolated_traffic:
+        for _, traffic_entry in ingest_log.consolated_traffic.items():
             config.database.run_procedure(
                 "snort.create_traffic_report",
                 [log_id,
                  traffic_entry.src.compressed,
-                 traffic_entry.srcport,
                  traffic_entry.dst.compressed,
-                 traffic_entry.dstport,
                  traffic_entry.ethsrc,
                  traffic_entry.ethdst,
                  traffic_entry.proto.value,

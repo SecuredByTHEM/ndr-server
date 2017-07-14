@@ -94,7 +94,7 @@ class TestIngests(unittest.TestCase):
         '''Tests that we can detect unknown hosts'''
         net_scan = self.load_network_scan(NMAP_ARP_SCAN)
         host_objs = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
-        self.assertEqual(len(host_objs), 4)
+        self.assertEqual(len(host_objs), 3)
 
     def test_adding_hosts_to_baseline(self):
         '''This tests the functionality of adding a host to a
@@ -103,7 +103,7 @@ class TestIngests(unittest.TestCase):
         # First, create a scan and import it
         net_scan = self.load_network_scan(NMAP_ARP_SCAN)
         unk_host_objs = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
-        self.assertEqual(len(unk_host_objs), 4)
+        self.assertEqual(len(unk_host_objs), 3)
 
         # Now, let's take the top object, add it to the baseline
         host_to_baseline = unk_host_objs.pop()
@@ -117,7 +117,7 @@ class TestIngests(unittest.TestCase):
         net_scan = self.load_network_scan(NMAP_ARP_SCAN)
         second_scan = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
 
-        self.assertEqual(len(second_scan), 3)
+        self.assertEqual(len(second_scan), 2)
         for host in second_scan:
             self.assertNotEqual(host, host_to_baseline)
 
@@ -136,7 +136,7 @@ class TestIngests(unittest.TestCase):
         # We've done this before
         net_scan = self.load_network_scan(NMAP_ARP_SCAN)
         unk_host_objs = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
-        self.assertEqual(len(unk_host_objs), 4)
+        self.assertEqual(len(unk_host_objs), 3)
 
         fake_timestamp = 1498548342
 

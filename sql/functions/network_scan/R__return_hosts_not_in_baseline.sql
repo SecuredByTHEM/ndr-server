@@ -31,7 +31,7 @@ BEGIN
     RAISE NOTICE 'Site ID %', scan_site_id;
 
     scan_hosts := array(
-        SELECT id FROM network_scan.hosts WHERE scan_id=_scan_id
+        SELECT id FROM network_scan.hosts WHERE scan_id=_scan_id  AND reason != 'localhost-response'
     );
 
     -- It's theorically possible (though very unlikely) we might get a blank scan

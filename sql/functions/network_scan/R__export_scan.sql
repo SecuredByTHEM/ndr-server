@@ -29,7 +29,7 @@ BEGIN
 
     -- Final bit get the scan_type back out
     scan_json := json_build_object(
-        'pg_id', scan_row.pg_id,
+        'pg_id', scan_row.id,
         'hosts', host_json_array,
         'scan_type', scan_row.scan_type,
         'scan_target', scan_row.scan_target

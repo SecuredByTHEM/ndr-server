@@ -40,8 +40,10 @@ BEGIN
 
     -- Now return the traffic information
     traffic_json := json_build_object(
-        'consolated_traffic', consolated_traffic
+        'consolidated_traffic', consolated_traffic
     );
+
+    CLOSE traffic_report_cursor;
     RETURN traffic_json;
 END
 $$;

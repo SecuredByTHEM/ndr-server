@@ -16,6 +16,9 @@
 
 '''Classes relating to management of data coming from SNORT'''
 
+import ipaddress
+import geoip2.database
+
 import ndr
 
 class TrafficLog(object):
@@ -59,3 +62,64 @@ class TrafficLog(object):
                 existing_db_conn=db_conn)
 
         return traffic_log
+
+class TrafficReport(object):
+    '''Traffic reports are a summary of all traffic to/from a machine consolated by the database
+    for us. This class handles holding the traffic report information, and then matching it to
+    GeoIP information'''
+
+    def __init__(self, config):
+        self.config = config
+        self.traffic_dicts = None
+
+    @classmethod
+    def pull_report_for_time_interval(cls, config, site, seconds_since, db_conn=None):
+        '''Pulls the report based on time from the database'''
+
+        traffic_dict = config.database.run_procedure_fetchone(
+            "snort.report_traffic_for_site_within_timeperiod",
+            [site.pg_id,
+             seconds_since],
+            existing_db_conn=db_conn)[0]
+
+        t_report = TrafficReport(config)
+        t_report.traffic_dicts = traffic_dict['consolidated_traffic']
+
+        return t_report
+
+    def process_dicts(self):
+        '''Goes through the traffic report, and deletes local network traffic'''
+
+        new_traffic_dicts = []
+        geoip_db = geoip2.database.Reader(self.config.geoip_db)
+
+        # We'll simply copy over the information we want, and discard what we don't
+        for traffic_dict in self.traffic_dicts:
+            # Simple things first, we need to convert src/dst to ipaddress objects
+            traffic_dict['src'] = ipaddress.ip_address(traffic_dict['src'])
+            traffic_dict['dst'] = ipaddress.ip_address(traffic_dict['dst'])
+
+            # Global IP is what we'll run the GeoIP report on
+            global_ip = None
+
+            # We only care about a network if one address is global, and one end isn't
+            if (traffic_dict['src'].is_global is True and
+                    traffic_dict['dst'].is_global is False):
+                global_ip = traffic_dict['src']
+            elif (traffic_dict['dst'].is_global is True and
+                  traffic_dict['src'].is_global is False):
+                global_ip = traffic_dict['dst']
+            else:
+                # Don't care about this IP
+                continue
+
+            # Run the IP through the database and see what we get
+            geoip_entry = geoip_db.city(global_ip)
+            traffic_dict['country'] = geoip_entry.country.name
+            traffic_dict['subdivision'] = geoip_entry.subdivisions.most_specific.name
+            traffic_dict['city'] = geoip_entry.city.name
+            new_traffic_dicts.append(traffic_dict)
+
+        # And clean up after ourselves
+        self.traffic_dicts = new_traffic_dicts
+        geoip_db.close()

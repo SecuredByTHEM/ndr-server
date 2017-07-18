@@ -25,7 +25,8 @@ setup(
         'cryptography',
         'pyyaml',
         'psycopg2 >= 2.7',
-        'pytz'
+        'pytz',
+        'geoip2'
     ],
     entry_points={
         'console_scripts': [

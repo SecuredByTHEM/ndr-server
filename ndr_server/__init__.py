@@ -28,5 +28,6 @@ from ndr_server.templates import (
     RecorderAlertMessage
 )
 from ndr_server.snort import (
-    TrafficLog
+    TrafficLog,
+    TrafficReport
 )

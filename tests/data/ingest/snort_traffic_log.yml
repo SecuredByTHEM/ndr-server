@@ -18,4 +18,20 @@ payload:
     rxpackets: 40
     src: 192.168.2.2
     txpackets: 48
+  - dst: 45.56.123.192
+    ethdst: 84:39:BE:64:3F:E5
+    ethsrc: 30:85:A9:3C:9D:99
+    firstseen: 1496059576.746527
+    proto: tcp
+    rxpackets: 9000
+    src: 192.168.2.2
+    txpackets: 48
+  - dst: 2600:3c00::f03c:91ff:fe98:b8fe
+    ethdst: 84:39:BE:64:3F:E5
+    ethsrc: 30:85:A9:3C:9D:99
+    firstseen: 1496059576.746527
+    proto: tcp
+    rxpackets: 9000
+    src: 192.168.2.2
+    txpackets: 48
 version: 1

@@ -63,6 +63,8 @@ class Config:
 
         self.logger = logger
 
+        self.geoip_db = config_dict.get('geoip_database', '/etc/ndr/geoip.mmdb')
+
         # Initialize the database connection with this config so it's obtainable down the pipe
         self.database = ndr_server.Database(self)
 

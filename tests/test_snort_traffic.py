@@ -25,14 +25,12 @@ import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
-NMAP_ARP_SCAN = THIS_DIR + "/data/ingest/nmap_arp_scan.yml"
-SYSLOG_SCAN = THIS_DIR + "/data/ingest/syslog_upload.yml"
-TEST_ALERT_MESSAGE = THIS_DIR + "/data/ingest/test_alert.yml"
 SNORT_TRAFFIC_LOG = THIS_DIR + "/data/ingest/snort_traffic_log.yml"
-ALERT_MSG_LOG = THIS_DIR + "/data/ingest/alert_msg.yml"
 
-class TestIngests(unittest.TestCase):
-    '''Tests various ingest cases'''
+LONG_SINCE_PERIOD = 157680000 # 5 years - since reports are based on generate date
+
+class TestTrafficReporting(unittest.TestCase):
+    '''Tests importing and reporting of traffic from snort'''
 
     @classmethod
     def setUpClass(cls):
@@ -61,7 +59,7 @@ class TestIngests(unittest.TestCase):
         cls._nsc.database.close()
         shutil.rmtree(cls._testdir)
 
-    def ingest_test_file(self, filename):
+    def ingest_file(self, filename):
         '''Simply feeds in the response for an ingest test'''
         file_contents = ""
         with open(filename, 'r') as scanfile:
@@ -71,36 +69,31 @@ class TestIngests(unittest.TestCase):
 
         ingest_daemon.process_ingest_message(self._db_connection, self._recorder, file_contents)
 
-    def test_incoming_directories_creation(self):
-        '''Confirms that we can successfully create the directories we need to process messages'''
-        ingest_daemon = ndr_server.IngestServer(self._nsc)
-        ingest_daemon.prep_ingest_directories()
+    def test_load_from_database(self):
+        '''Tests getting basic JSON information from a report from the database'''
 
-        self.assertTrue(os.path.isdir(self._nsc.accepted_directory))
-        self.assertTrue(os.path.isdir(self._nsc.incoming_directory))
-        self.assertTrue(os.path.isdir(self._nsc.reject_directory))
-        self.assertTrue(os.path.isdir(self._nsc.error_directory))
-        self.assertTrue(os.path.isdir(self._nsc.enrollment_directory))
+        # Ingest a log so that we can pull a traffic report
+        self.ingest_file(SNORT_TRAFFIC_LOG)
 
-    def test_nmap_ingest(self):
-        '''Tests that an NMAP scan actually goes into the database'''
-        self.ingest_test_file(NMAP_ARP_SCAN)
+        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+            self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
+        self.assertEqual(len(traffic_report.traffic_dicts), 3)
 
-    def test_syslog_ingest(self):
-        '''Tests that an syslog ingest actually goes into the database'''
-        self.ingest_test_file(SYSLOG_SCAN)
+    def test_process_dicts(self):
+        '''Tests getting basic JSON information from a report from the database'''
 
-    def test_alert_tester(self):
-        '''Tests the Alert Test Message'''
-        self.ingest_test_file(TEST_ALERT_MESSAGE)
+        # Ingest a log so that we can pull a traffic report
+        self.ingest_file(SNORT_TRAFFIC_LOG)
 
-    def test_snort_traffic_ingest(self):
-        '''Tests ingesting a snort traffic report'''
-        self.ingest_test_file(SNORT_TRAFFIC_LOG)
+        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+            self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
 
-    def test_ingesting_alert_msg(self):
-        '''Tests ingesting a generic alert message'''
-        self.ingest_test_file(ALERT_MSG_LOG)
+        traffic_report.process_dicts()
 
-if __name__ == '__main__':
-    unittest.main()
+        # The test data was specificly set do both the IPv4/IPv6 traffic is in Dallas
+        self.assertEqual(len(traffic_report.traffic_dicts), 2)
+
+        for traffic_dict in traffic_report.traffic_dicts:
+            self.assertEqual(traffic_dict['country'], 'United States')
+            self.assertEqual(traffic_dict['subdivision'], 'Texas')
+            self.assertEqual(traffic_dict['city'], 'Dallas')

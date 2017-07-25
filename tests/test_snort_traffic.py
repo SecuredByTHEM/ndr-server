@@ -97,3 +97,25 @@ class TestTrafficReporting(unittest.TestCase):
             self.assertEqual(traffic_dict['country'], 'United States')
             self.assertEqual(traffic_dict['subdivision'], 'Texas')
             self.assertEqual(traffic_dict['city'], 'Dallas')
+
+    def test_generate_statistics(self):
+        '''Tests generation of statistics of SNORT traffic'''
+        self.ingest_file(SNORT_TRAFFIC_LOG)
+
+        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+            self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
+
+        traffic_report.process_dicts()
+        traffic_report.generate_statistics()
+        self.assertIn("United States", traffic_report.statistics_dicts)
+
+    def test_email_report(self):
+        '''Tests generation of email reports and such'''
+        self.ingest_file(SNORT_TRAFFIC_LOG)
+
+        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+            self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
+
+        traffic_report.process_dicts()
+        traffic_report.generate_statistics()
+        traffic_report.generate_report_emails()

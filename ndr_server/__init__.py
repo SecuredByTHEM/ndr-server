@@ -25,7 +25,8 @@ from ndr_server.network_scan import NetworkScan
 from ndr_server.templates import (
     TestAlertTemplate,
     UnknownMachineTemplate,
-    RecorderAlertMessage
+    RecorderAlertMessage,
+    TrafficReportMessage
 )
 from ndr_server.snort import (
     TrafficLog,

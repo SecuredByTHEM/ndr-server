@@ -21,6 +21,7 @@ import logging
 import tempfile
 import shutil
 
+import geoip2
 import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +30,16 @@ SNORT_TRAFFIC_LOG = THIS_DIR + "/data/ingest/snort_traffic_log.yml"
 
 LONG_SINCE_PERIOD = 157680000 # 5 years - since reports are based on generate date
 
+def check_if_can_open_geoip_db():
+    nsc = ndr_server.Config(logging.getLogger(), TEST_CONFIG)
+    try:
+        geoip_db = geoip2.database.Reader(nsc.geoip_db)
+    except:
+        return False
+
+    return True
+
+@unittest.skipUnless(check_if_can_open_geoip_db(), "no geoip DB")
 class TestTrafficReporting(unittest.TestCase):
     '''Tests importing and reporting of traffic from snort'''
 

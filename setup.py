@@ -26,7 +26,8 @@ setup(
         'pyyaml',
         'psycopg2 >= 2.7',
         'pytz',
-        'geoip2'
+        'geoip2',
+        'terminaltables'
     ],
     entry_points={
         'console_scripts': [

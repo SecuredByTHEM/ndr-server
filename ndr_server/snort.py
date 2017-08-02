@@ -127,7 +127,7 @@ class TrafficReport(object):
 
             try:
                 # Run the IP through the database and see what we get
-                geoip_entry = geoip_db.city(global_ip)
+                geoip_entry = geoip_db.city(global_ip.compressed)
                 traffic_dict['country'] = geoip_entry.country.name
                 traffic_dict['subdivision'] = geoip_entry.subdivisions.most_specific.name
                 traffic_dict['city'] = geoip_entry.city.name
@@ -224,4 +224,3 @@ class TrafficReport(object):
         '''Generates a report email breaking down traffic by country destination'''
 
         tr_email = ndr_server.TrafficReportMessage(self.organization, self.site, self)
-        print(tr_email.prepped_message())

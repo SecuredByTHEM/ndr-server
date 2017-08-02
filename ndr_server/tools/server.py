@@ -16,17 +16,7 @@
 
 '''Ingest daemon for NDR'''
 import logging
-import time
-import sys
-import glob
-import shutil
-
-import psycopg2
-
-import ndr
 import ndr_server
-
-INGEST_VERSION = '0.0.1'
 
 def main():
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s')

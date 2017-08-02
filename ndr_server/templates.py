@@ -20,6 +20,7 @@ import textwrap
 import datetime
 import string
 import pytz
+from terminaltables import AsciiTable
 
 # pylint: disable=line-too-long
 
@@ -37,9 +38,11 @@ class BaseTemplate(object):
         self.event_time = event_time
 
         # Calculate out the event time
-        self.time_str = datetime.datetime.fromtimestamp(
-            self.event_time, pytz.timezone('America/New_York')).strftime('%Y-%m-%d %H:%M:%S%z (%Z)')
-
+        if event_time is not None:
+            self.time_str = datetime.datetime.fromtimestamp(
+                self.event_time, pytz.timezone('America/New_York')).strftime('%Y-%m-%d %H:%M:%S%z (%Z)')
+        else:
+            self.time_str = "None"
         self.subject_text = "Base Template - Not Used"
         self.message = "Base Template Message - If you see this, it's a bug"
         self.footer = '''Sincerely Yours,
@@ -54,12 +57,7 @@ For more information, please contact us at +1-917-716-2585 at any time day or ni
 
     def replace_tokens(self, text):
         '''Replaces tokens in the template'''
-        template = string.Template(text)
-        return template.substitute(
-            recorder_human_name=self.recorder.human_name,
-            org_name=self.organization.name,
-            site_name=self.site.name,
-            time=self.time_str)
+        pass
 
     def subject(self):
         '''Returns string replaced subject line'''
@@ -71,7 +69,7 @@ For more information, please contact us at +1-917-716-2585 at any time day or ni
 
         final_text = ""
         for line in base_msg.splitlines():
-            final_text += textwrap.fill(line, width=78)
+            final_text += textwrap.fill(line, width=98)
             final_text += "\n"
 
         # Add a spacer for the signature
@@ -79,7 +77,7 @@ For more information, please contact us at +1-917-716-2585 at any time day or ni
 
         finalized_footer = self.replace_tokens(self.footer)
         for line in finalized_footer.splitlines():
-            final_text += textwrap.fill(line, width=78)
+            final_text += textwrap.fill(line, width=98)
             final_text += "\n"
 
         return final_text
@@ -94,6 +92,14 @@ class TestAlertTemplate(BaseTemplate):
 
 As part of this alert test, please verify that this message is properly signed as an authentic message by Secured By THEM. See below for more details.
 '''
+
+    def replace_tokens(self, text):
+        template = string.Template(text)
+        return template.substitute(
+            recorder_human_name=self.recorder.human_name,
+            org_name=self.organization.name,
+            site_name=self.site.name,
+            time=self.time_str)
 
 class UnknownMachineTemplate(BaseTemplate):
     '''Template used for when unknown machines are detected'''
@@ -166,4 +172,88 @@ $alert
             org_name=self.organization.name,
             site_name=self.site.name,
             time=self.time_str
+        )
+
+class TrafficReportMessage(BaseTemplate):
+    '''Traffic Reporting Emails'''
+    def __init__(self, organization, site, traffic_report):
+        BaseTemplate.__init__(self, organization, site, None, None)
+        self.traffic_report = traffic_report
+        self.subject_text = "Internet Traffic Report For Site $site_name"
+        self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions. GeoIP data is provided by GeoLite2 data available from MaxMind.
+
+Traffic Breakdown By Country
+===
+$country_breakdown'''
+
+    def generate_country_breakdown(self):
+        '''Generates a breakdown of the traffic'''
+
+        # We'll sort on transmitted data
+        table_data = [
+            ['Country', 'Subdivision', '% Transmitted', '% Received', 'TX Packets', 'RX Packets']
+        ]
+
+        tx_entry_dict = {}
+
+        for country, values in self.traffic_report.statistics_dicts.items():
+            table_entry = []
+
+            # First add the country
+            country_line = [
+                country,
+                "",
+                values['transmit_percentage'],
+                values['receive_percentage'],
+                values['txpackets'],
+                values['rxpackets']
+            ]
+            table_entry.append(country_line)
+
+            # Now the subdivisions of each country
+            for subdivision, subvalues in values['subdivisions'].items():
+                sub_line = [
+                    "",
+                    subdivision,
+                    subvalues['transmit_percentage'],
+                    subvalues['receive_percentage'],
+                    subvalues['txpackets'],
+                    subvalues['rxpackets']
+                ]
+                table_entry.append(sub_line)
+
+            # Add it to the TX dict now
+
+            # This can happen if we get two stat dicts with the same percentage
+            if values['transmit_percentage'] in tx_entry_dict:
+                tx_entry_dict[values['transmit_percentage']] += table_entry
+            else:
+                tx_entry_dict[values['transmit_percentage']] = table_entry
+
+        for key in sorted(tx_entry_dict.keys(), reverse=True):
+            table_data += tx_entry_dict[key]
+
+        # Add a final line with the total
+        total = [
+            "Total",
+            "",
+            float(100),
+            float(100),
+            self.traffic_report.total_txpackets,
+            self.traffic_report.total_rxpackets
+        ]
+        table_data.append([])
+        table_data.append(total)
+
+        # Now generate a pretty table and return it
+        table = AsciiTable(table_data)
+        return table.table
+
+    def replace_tokens(self, text):
+        '''Does additional token replacement for unknown machines'''
+        base_template = string.Template(text)
+        return base_template.substitute(
+            org_name=self.organization.name,
+            site_name=self.site.name,
+            country_breakdown=self.generate_country_breakdown()
         )

@@ -99,6 +99,7 @@ class TestIngests(unittest.TestCase):
         self.ingest_test_file(SNORT_TRAFFIC_LOG)
 
     def test_ingesting_alert_msg(self):
+        '''Tests ingesting a generic alert message'''
         self.ingest_test_file(ALERT_MSG_LOG)
 
 if __name__ == '__main__':

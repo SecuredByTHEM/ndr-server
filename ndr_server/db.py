@@ -48,25 +48,19 @@ class Database(object):
 
     def run_procedure(self, proc, list_args, existing_db_conn=None):
         '''Runs a stored procedure and returns a cursor to the result set'''
-        try:
-            if existing_db_conn is None:
-                db_conn = self.get_connection()
-            else:
-                db_conn = existing_db_conn
+        if existing_db_conn is None:
+            db_conn = self.get_connection()
+        else:
+            db_conn = existing_db_conn
 
-            cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-            cursor.callproc(proc, list_args)
+        cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.callproc(proc, list_args)
 
-            if existing_db_conn is None:
-                db_conn.commit()
-                self.connection.putconn(db_conn)
-
-            return cursor
-
-        except psycopg2.Error:
-            db_conn.rollback()
+        if existing_db_conn is None:
+            db_conn.commit()
             self.connection.putconn(db_conn)
-            raise
+
+        return cursor
 
     def close(self):
         '''Cleans up and closes the database connection'''

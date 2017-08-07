@@ -62,8 +62,13 @@ class TestSites(unittest.TestCase):
 
     def test_expect_on_bad_read(self):
         '''Tests database exception throwing'''
+
+        # As usual, make new connection for things that will fail
+        db2 = self._nsc.database.get_connection()
         self.assertRaises(psycopg2.InternalError,
-                          ndr_server.Site.read_by_id, self._nsc, 10000)
+                          ndr_server.Site.read_by_id, self._nsc, 10000,
+                          db_conn=db2)
+        db2.close()
 
 if __name__ == '__main__':
     unittest.main()

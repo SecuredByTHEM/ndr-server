@@ -38,27 +38,26 @@ class Database(object):
         '''Returns the connection to the pool'''
         self.connection.putconn(connection)
 
-    def run_procedure_fetchone(self, proc, list_args, existing_db_conn=None):
-        '''Runs a stored procedure. If an existing connection is not provided, then one
-           is automatically created, and committed at the procedure. On an error, the
-           transaction is automatically rolled back and the connection closed'''
-
-        cursor = self.run_procedure(proc, list_args, existing_db_conn)
-        return cursor.fetchone()
-
-    def run_procedure(self, proc, list_args, existing_db_conn=None):
-        '''Runs a stored procedure and returns a cursor to the result set'''
-        if existing_db_conn is None:
-            db_conn = self.get_connection()
-        else:
-            db_conn = existing_db_conn
+    def run_procedure_fetchone(self, proc, list_args, existing_db_conn):
+        '''Runs a stored procedure, returns one item, then closes the cursor'''
+        db_conn = existing_db_conn
 
         cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.callproc(proc, list_args)
 
+        result = cursor.fetchone()
+        cursor.close()
+        return result
+
+    def run_procedure(self, proc, list_args, existing_db_conn):
+        '''Runs a stored procedure and returns a cursor to the result set'''
         if existing_db_conn is None:
-            db_conn.commit()
-            self.connection.putconn(db_conn)
+            raise ValueError("Must pass in connection")
+
+        db_conn = existing_db_conn
+
+        cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.callproc(proc, list_args)
 
         return cursor
 

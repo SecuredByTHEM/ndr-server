@@ -40,11 +40,8 @@ class Database(object):
 
     def run_procedure_fetchone(self, proc, list_args, existing_db_conn):
         '''Runs a stored procedure, returns one item, then closes the cursor'''
-        db_conn = existing_db_conn
 
-        cursor = db_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cursor.callproc(proc, list_args)
-
+        cursor = self.run_procedure(proc, list_args, existing_db_conn)
         result = cursor.fetchone()
         cursor.close()
         return result

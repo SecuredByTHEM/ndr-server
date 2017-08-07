@@ -61,7 +61,14 @@ class TestContacts(unittest.TestCase):
 
     def test_expect_on_bad_read(self):
         '''Tests the expection in the storage procedure'''
-        self.assertRaises(psycopg2.InternalError, ndr_server.Contact.get_by_id, self._nsc, 10000)
 
+        # Use seperate connection to prevent rollback
+        db2 = self._nsc.database.get_connection()
+        self.assertRaises(psycopg2.InternalError,
+                          ndr_server.Contact.get_by_id,
+                          self._nsc,
+                          10000,
+                          db_conn=db2)
+        db2.close()
 if __name__ == '__main__':
     unittest.main()

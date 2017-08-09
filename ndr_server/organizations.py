@@ -25,43 +25,55 @@ import ndr_server
 class Organization(object):
     '''Organizations represent a paying customer. They can have multiple sites'''
 
-    def __init__(self, config, name):
+    def __init__(self, config):
         self.config = config
         self.pg_id = None
-        self.name = name
+        self.name = None
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        '''We consider ourselves equal if pg_id matches. We never match when pg_id == None'''
 
-    @classmethod
-    def from_dict(cls, config, org_dict):
+        if self.pg_id is None:
+            return False
+
+        return self.pg_id == other.pg_id
+
+    def from_dict(self, org_dict):
         '''Deserializes an organization from a dictionary'''
-        org = Organization(config, org_dict['name'])
-        org.pg_id = org_dict['id']
+        self.name = org_dict['name']
+        self.pg_id = org_dict['id']
 
-        return org
+        return self
 
     @classmethod
     def create(cls, config, name, db_conn=None):
         '''Creates the organization within the database'''
-        org = Organization(config, name)
+        org = Organization(config)
+        org.name = name
 
         org.pg_id = config.database.run_procedure_fetchone(
             "admin.insert_organization", [name], existing_db_conn=db_conn)[0]
 
         return org
 
-    @staticmethod
-    def read_by_id(config, org_id, db_conn=None):
+    @classmethod
+    def read_by_id(cls, config, org_id, db_conn=None):
         '''Loads an organization by ID number'''
-        return Organization.from_dict(config, config.database.run_procedure_fetchone(
-            "admin.select_organization_by_id", [org_id], existing_db_conn=db_conn))
+        org_dict = config.database.run_procedure_fetchone("admin.select_organization_by_id",
+                                                          [org_id],
+                                                          existing_db_conn=db_conn)
+        org = cls(config)
+        return org.from_dict(org_dict)
 
-    @staticmethod
-    def read_by_name(config, org_name, db_conn=None):
+    @classmethod
+    def read_by_name(cls, config, org_name, db_conn=None):
         '''Loads an organization by name'''
-        return Organization.from_dict(config, config.database.run_procedure_fetchone(
-            "admin.select_organization_by_name", [org_name], existing_db_conn=db_conn))
+        org_dict = config.database.run_procedure_fetchone("admin.select_organization_by_name",
+                                                          [org_name],
+                                                          existing_db_conn=db_conn)
+
+        org = cls(config)
+        return org.from_dict(org_dict)
 
     def get_contacts(self, db_conn=None):
         '''Gets alert contacts for an organization'''

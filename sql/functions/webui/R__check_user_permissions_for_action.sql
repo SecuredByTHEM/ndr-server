@@ -1,5 +1,6 @@
--- Returns the organizations for a user
-CREATE OR REPLACE FUNCTION webui.get_organizations_for_user(_user_id bigint) RETURNS SETOF public.organizations
+-- Checks ACL for user actions such as creating new users and such
+
+CREATE OR REPLACE FUNCTION webui.check_user_permissions_for_action(_user_id bigint, _action webui.user_admin_actions) RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
@@ -16,6 +17,6 @@ BEGIN
         RAISE EXCEPTION 'User ACLs not implemented';
     END IF;
 
-    RETURN QUERY SELECT * FROM organizations;
+    RETURN 't';
 END
 $$;

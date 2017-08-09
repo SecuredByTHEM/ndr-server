@@ -1,5 +1,5 @@
 -- Selects a user by ID number
-CREATE FUNCTION webui.select_user_by_id(_user_id bigint) RETURNS SETOF webui.users
+CREATE OR REPLACE FUNCTION webui.select_user_by_id(_user_id bigint) RETURNS SETOF webui.users
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 BEGIN

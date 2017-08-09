@@ -1,5 +1,8 @@
--- Returns the organizations for a user
-CREATE OR REPLACE FUNCTION webui.get_organizations_for_user(_user_id bigint) RETURNS SETOF public.organizations
+-- Checks if a user is allowed to access a given organization
+--
+-- Raises exception if not true
+
+CREATE OR REPLACE FUNCTION webui.check_organization_acl(_user_id bigint, _org_id bigint) RETURNS boolean
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 DECLARE
@@ -13,9 +16,9 @@ BEGIN
     -- If we're a superadmin, we can see all organizations
     IF user_row.superadmin IS FALSE THEN
         -- ACL stuff goes here, which is not implemented
-        RAISE EXCEPTION 'User ACLs not implemented';
+        RAISE EXCEPTION 'User is not allowed to access this organization';
     END IF;
 
-    RETURN QUERY SELECT * FROM organizations;
+    RETURN 't';
 END
 $$;

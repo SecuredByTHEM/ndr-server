@@ -1,5 +1,5 @@
 -- Selects a user by email address
-CREATE FUNCTION webui.select_user_by_username(_username text) RETURNS SETOF webui.users
+CREATE OR REPLACE FUNCTION webui.select_user_by_username(_username text) RETURNS SETOF webui.users
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 BEGIN

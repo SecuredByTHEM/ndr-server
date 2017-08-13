@@ -48,7 +48,7 @@ class Organization(object):
     @classmethod
     def create(cls, config, name, db_conn=None):
         '''Creates the organization within the database'''
-        org = Organization(config)
+        org = cls(config)
         org.name = name
 
         org.pg_id = config.database.run_procedure_fetchone(

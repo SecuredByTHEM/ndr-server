@@ -19,19 +19,25 @@ import ndr_server
 class Site(object):
     '''Sites represent a physical location. Recorders exist within sites'''
 
-    def __init__(self, config, name):
+    def __init__(self, config):
         self.config = config
         self.org_id = None
         self.pg_id = None
-        self.name = name
+        self.name = None
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        '''We consider ourselves equal if pg_id matches. We never match when pg_id == None'''
+
+        if self.pg_id is None:
+            return False
+
+        return self.pg_id == other.pg_id
 
     @classmethod
     def create(cls, config, organization, name, db_conn=None):
         '''Creates the organization within the database'''
-        site = Site(config, name)
+        site = cls(config)
+        site.name = name
         site.org_id = organization.pg_id
         site.pg_id = config.database.run_procedure_fetchone(
             "admin.insert_site", [organization.pg_id, name],
@@ -42,22 +48,24 @@ class Site(object):
     @classmethod
     def from_dict(cls, config, site_dict):
         '''Deserializes an organization from a dictionary'''
-        site = Site(config, site_dict['name'])
+        site = cls(config)
+        site.name = site_dict['name']
         site.pg_id = site_dict['id']
         site.org_id = site_dict['org_id']
         return site
 
     def get_organization(self, db_conn=None):
+        '''Returns parent organization'''
         return ndr_server.Organization.read_by_id(self.config, self.org_id, db_conn=db_conn)
 
-    @staticmethod
-    def read_by_id(config, site_id, db_conn=None):
+    @classmethod
+    def read_by_id(cls, config, site_id, db_conn=None):
         '''Loads an site by ID number'''
-        return Site.from_dict(config, config.database.run_procedure_fetchone(
+        return cls.from_dict(config, config.database.run_procedure_fetchone(
             "admin.select_site_by_id", [site_id], existing_db_conn=db_conn))
 
-    @staticmethod
-    def read_by_name(config, site_name, db_conn=None):
+    @classmethod
+    def read_by_name(cls, config, site_name, db_conn=None):
         '''Loads an site by name'''
-        return Site.from_dict(config, config.database.run_procedure_fetchone(
+        return cls.from_dict(config, config.database.run_procedure_fetchone(
             "admin.select_site_by_name", [site_name], existing_db_conn=db_conn))

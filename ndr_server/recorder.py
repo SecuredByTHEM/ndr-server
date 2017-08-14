@@ -37,12 +37,15 @@ class Recorder(object):
     def __eq__(self, other):
         # Recorders equal each other if the pg_id matches each other
         # since its the same record in the database
+        if self.pg_id is None:
+            return False
+
         return self.pg_id == other.pg_id
 
     @classmethod
     def create(cls, config, site, human_name, hostname, db_conn=None):
         '''Creates the recorder within the database'''
-        recorder = Recorder(config)
+        recorder = cls(config)
         recorder.human_name = human_name
         recorder.hostname = hostname
         recorder.site_id = site.pg_id
@@ -56,32 +59,32 @@ class Recorder(object):
 
         return recorder
 
-    @classmethod
-    def from_dict(cls, config, recorder_dict):
+    def from_dict(self, recorder_dict):
         '''Deserializes an recorder from a dictionary'''
-        recorder = Recorder(config)
-        recorder.human_name = recorder_dict['human_name']
-        recorder.hostname = recorder_dict['hostname']
-        recorder.site_id = recorder_dict['site_id']
-        recorder.pg_id = recorder_dict['id']
+        self.human_name = recorder_dict['human_name']
+        self.hostname = recorder_dict['hostname']
+        self.site_id = recorder_dict['site_id']
+        self.pg_id = recorder_dict['id']
 
-        return recorder
+        return self
 
     def get_site(self, db_conn=None):
         '''Gets the site object for this recorder'''
         return ndr_server.Site.read_by_id(self.config, self.site_id, db_conn)
 
-    @staticmethod
-    def read_by_id(config, recorder_id, db_conn=None):
+    @classmethod
+    def read_by_id(cls, config, recorder_id, db_conn=None):
         '''Loads an recorder by ID number'''
-        return Recorder.from_dict(config, config.database.run_procedure_fetchone(
+        rec = cls(config)
+        return rec.from_dict(config.database.run_procedure_fetchone(
             "ingest.select_recorder_by_id", [recorder_id], existing_db_conn=db_conn))
 
-    @staticmethod
-    def read_by_hostname(config, hostname, db_conn=None):
+    @classmethod
+    def read_by_hostname(cls, config, hostname, db_conn=None):
         '''Loads a recorder based of it's hostname in the database'''
+        rec = cls(config)
 
-        return Recorder.from_dict(config, config.database.run_procedure_fetchone(
+        return rec.from_dict(config.database.run_procedure_fetchone(
             "ingest.select_recorder_by_hostname", [hostname], existing_db_conn=db_conn))
 
     @staticmethod

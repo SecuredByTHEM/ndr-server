@@ -45,14 +45,12 @@ class Site(object):
 
         return site
 
-    @classmethod
-    def from_dict(cls, config, site_dict):
+    def from_dict(self, site_dict):
         '''Deserializes an organization from a dictionary'''
-        site = cls(config)
-        site.name = site_dict['name']
-        site.pg_id = site_dict['id']
-        site.org_id = site_dict['org_id']
-        return site
+        self.name = site_dict['name']
+        self.pg_id = site_dict['id']
+        self.org_id = site_dict['org_id']
+        return self
 
     def get_organization(self, db_conn=None):
         '''Returns parent organization'''
@@ -61,11 +59,15 @@ class Site(object):
     @classmethod
     def read_by_id(cls, config, site_id, db_conn=None):
         '''Loads an site by ID number'''
-        return cls.from_dict(config, config.database.run_procedure_fetchone(
+
+        site = cls(config)
+        return site.from_dict(config.database.run_procedure_fetchone(
             "admin.select_site_by_id", [site_id], existing_db_conn=db_conn))
 
     @classmethod
     def read_by_name(cls, config, site_name, db_conn=None):
         '''Loads an site by name'''
-        return cls.from_dict(config, config.database.run_procedure_fetchone(
+
+        site = cls(config)
+        return site.from_dict(config.database.run_procedure_fetchone(
             "admin.select_site_by_name", [site_name], existing_db_conn=db_conn))

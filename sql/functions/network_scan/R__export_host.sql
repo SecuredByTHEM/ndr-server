@@ -31,6 +31,10 @@ BEGIN
         );
     END LOOP; -- hostname loop
 
+
+    -- Initialize a default if stuff isn't there'
+    port_json_array := NULL;
+
     -- Grab the port data
     FOR port_row IN SELECT * FROM network_scan.flattened_host_ports WHERE host_id=host_address.host_id
     LOOP
@@ -39,11 +43,6 @@ BEGIN
             script_output_array json[];
             cpes_array json[];
         BEGIN
-            -- If the port is not present (i.e., surface scans, simply exclude it)
-            IF NOT FOUND THEN
-                port_json_array := NULL;
-                EXIT;
-            END IF;
 
             -- Grab the service information and append it
             service_json := NULL;

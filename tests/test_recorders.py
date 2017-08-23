@@ -81,5 +81,22 @@ class TestSites(unittest.TestCase):
                           db_conn=db2)
         db2.close()
 
+    def test_updating_recorder_sw_attributions(self):
+        '''Confirms that we can properly update and set the version of SW the recorder is running'''
+        recorder = ndr_server.Recorder.create(
+            self._nsc, self._test_site, "Test Recorder SW revision", "ndr_sw",
+            db_conn=self._db_connection
+        )
+
+        recorder.set_recorder_sw_revision(12345678, "test", self._db_connection)
+
+        # Now read back that recorder, and see if we can get the magic
+        recorder_read = ndr_server.Recorder.read_by_id(self._nsc,
+                                                       recorder.pg_id,
+                                                       db_conn=self._db_connection)
+
+        self.assertEqual(recorder_read.image_type, "test")
+        self.assertEqual(recorder_read.image_build_date, 12345678)
+
 if __name__ == '__main__':
     unittest.main()

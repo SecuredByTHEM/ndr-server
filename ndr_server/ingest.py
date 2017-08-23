@@ -161,6 +161,18 @@ class IngestServer():
                 self.config, recorder, log_id, message, db_conn=db_connection
             )
 
+        # Recorder status message
+        elif message.message_type == ndr.IngestMessageTypes.STATUS:
+            # Status messages have two parts, one that is used to update the recorder's
+            # SW revision, and a second one that's used to record the file revision for
+            # the recorder
+
+            # First bit, update the recorder SW revision to match reality
+            status_msg = ndr.StatusMessage().from_message(message)
+            recorder.set_recorder_sw_revision(status_msg.image_build_date,
+                                              status_msg.image_type,
+                                              db_connection)
+
         else:
             raise ValueError("Unknown message type!")
 

@@ -1,0 +1,8 @@
+generated-at: Wed, 23 Aug 2017 18:22:48 -0000
+message-type: status
+payload:
+  config_file_versions:
+    nmap_config: aa0f2149fa8f1f823383366ad8867ee80a44ff37d27ba6e645ae34f782901af6
+  image_build_date: 1499734693
+  image_type: development
+version: 1

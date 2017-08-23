@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+'''Tests functionality related to status messages and file management'''
+
 import unittest
 import os
 import logging
@@ -25,12 +27,7 @@ import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
-NMAP_ARP_SCAN = THIS_DIR + "/data/ingest/nmap_arp_scan.yml"
-SYSLOG_SCAN = THIS_DIR + "/data/ingest/syslog_upload.yml"
-TEST_ALERT_MESSAGE = THIS_DIR + "/data/ingest/test_alert.yml"
-SNORT_TRAFFIC_LOG = THIS_DIR + "/data/ingest/snort_traffic_log.yml"
-ALERT_MSG_LOG = THIS_DIR + "/data/ingest/alert_msg.yml"
-STATUS_MSG = THIS_DIR + "/data/ingest/status.yml"
+STATUS_MSG= THIS_DIR + "/data/ingest/status.yml"
 
 class TestIngests(unittest.TestCase):
     '''Tests various ingest cases'''
@@ -43,8 +40,6 @@ class TestIngests(unittest.TestCase):
 
         # We need to process test messages, so override the base directory for
         # this test
-        cls._testdir = tempfile.mkdtemp()
-        cls._nsc.base_directory = cls._testdir
         cls._db_connection = cls._nsc.database.get_connection()
 
         # For this specific test, we need to create a few test objects
@@ -53,14 +48,13 @@ class TestIngests(unittest.TestCase):
         cls._test_site = ndr_server.Site.create(
             cls._nsc, cls._test_org, "Ingest Recorders Site", db_conn=cls._db_connection)
         cls._recorder = ndr_server.Recorder.create(
-            cls._nsc, cls._test_site, "Test Recorder", "ndr_test_ingest",
+            cls._nsc, cls._test_site, "Test Recorder", "ndr_test_status",
             db_conn=cls._db_connection)
 
     @classmethod
     def tearDownClass(cls):
         cls._db_connection.rollback()
         cls._nsc.database.close()
-        shutil.rmtree(cls._testdir)
 
     def ingest_test_file(self, filename):
         '''Simply feeds in the response for an ingest test'''
@@ -72,40 +66,13 @@ class TestIngests(unittest.TestCase):
 
         ingest_daemon.process_ingest_message(self._db_connection, self._recorder, file_contents)
 
-    def test_incoming_directories_creation(self):
-        '''Confirms that we can successfully create the directories we need to process messages'''
-        ingest_daemon = ndr_server.IngestServer(self._nsc)
-        ingest_daemon.prep_ingest_directories()
+    def test_recorder_version_update(self):
+        '''Tests loading of a status message and making sure the version information updates'''
 
-        self.assertTrue(os.path.isdir(self._nsc.accepted_directory))
-        self.assertTrue(os.path.isdir(self._nsc.incoming_directory))
-        self.assertTrue(os.path.isdir(self._nsc.reject_directory))
-        self.assertTrue(os.path.isdir(self._nsc.error_directory))
-        self.assertTrue(os.path.isdir(self._nsc.enrollment_directory))
-
-    def test_nmap_ingest(self):
-        '''Tests that an NMAP scan actually goes into the database'''
-        self.ingest_test_file(NMAP_ARP_SCAN)
-
-    def test_syslog_ingest(self):
-        '''Tests that an syslog ingest actually goes into the database'''
-        self.ingest_test_file(SYSLOG_SCAN)
-
-    def test_alert_tester(self):
-        '''Tests the Alert Test Message'''
-        self.ingest_test_file(TEST_ALERT_MESSAGE)
-
-    def test_snort_traffic_ingest(self):
-        '''Tests ingesting a snort traffic report'''
-        self.ingest_test_file(SNORT_TRAFFIC_LOG)
-
-    def test_ingesting_alert_msg(self):
-        '''Tests ingesting a generic alert message'''
-        self.ingest_test_file(ALERT_MSG_LOG)
-
-    def test_ingesting_status_msg(self):
-        '''Tests ingesting a status message'''
         self.ingest_test_file(STATUS_MSG)
 
-if __name__ == '__main__':
-    unittest.main()
+        recorder = ndr_server.Recorder.read_by_id(self._nsc,
+                                                  self._recorder.pg_id,
+                                                  db_conn=self._db_connection)
+        self.assertEqual(recorder.image_build_date, 1499734693)
+        self.assertEqual(recorder.image_type, 'development')

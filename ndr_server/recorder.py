@@ -33,6 +33,8 @@ class Recorder(object):
         self.hostname = None
         self.enlisted_at = None
         self.last_seen = None
+        self.image_build_date = None
+        self.image_type = None
 
     def __eq__(self, other):
         # Recorders equal each other if the pg_id matches each other
@@ -65,12 +67,26 @@ class Recorder(object):
         self.hostname = recorder_dict['hostname']
         self.site_id = recorder_dict['site_id']
         self.pg_id = recorder_dict['id']
+        self.image_build_date = recorder_dict['image_build_date']
+        self.image_type = recorder_dict['image_type']
 
         return self
 
     def get_site(self, db_conn=None):
         '''Gets the site object for this recorder'''
         return ndr_server.Site.read_by_id(self.config, self.site_id, db_conn)
+
+    def set_recorder_sw_revision(self, image_build_date, image_type, db_conn):
+        '''Sets the recorder's software revision, and image type and updates the database
+           with that information'''
+
+        # Make sure we have an integer coming in
+        image_build_date = int(image_build_date)
+        self.config.database.run_procedure("admin.set_recorder_sw_revision",
+                                           [self.pg_id, image_build_date, image_type],
+                                           existing_db_conn=db_conn)
+        self.image_build_date = image_build_date
+        self.image_type = image_type
 
     @classmethod
     def read_by_id(cls, config, recorder_id, db_conn=None):

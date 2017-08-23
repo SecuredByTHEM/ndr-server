@@ -33,6 +33,7 @@ def main():
     # We need both configs
     ncc = ndr.Config("/etc/ndr/config.yml") # NDR Client Config
     nsc = ndr_server.Config(logger, "/etc/ndr/ndr_server.yml")
+    db_connection = nsc.database.get_connection()
 
     parser = argparse.ArgumentParser(
         description="Requests that a recorder restart to install OTAs updates")
@@ -45,7 +46,7 @@ def main():
             # We'll try to initialize a Recorder object. We don't need it but it confirms
             # that the recorder exists in the datbase
 
-            ndr_server.Recorder.read_by_hostname(nsc, recorder)
+            ndr_server.Recorder.read_by_hostname(nsc, recorder, db_conn=db_connection)
             msg = ndr.IngestMessage(config=ncc, message_type=ndr.IngestMessageTypes.REBOOT_REQUEST)
 
             msg.destination = recorder
@@ -56,6 +57,8 @@ def main():
 
         except psycopg2.DatabaseError:
             logger.error("recorder %s does not exist", recorder)
+
+    db_connection.close()
 
 if __name__ == '__main__':
     main()

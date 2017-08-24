@@ -32,3 +32,7 @@ from ndr_server.snort import (
     TrafficLog,
     TrafficReport
 )
+from ndr_server.recorder_file_manger import (
+    RecorderFileManager,
+    RecorderFileRecord
+)

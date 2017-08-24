@@ -76,6 +76,12 @@ class Recorder(object):
         '''Gets the site object for this recorder'''
         return ndr_server.Site.read_by_id(self.config, self.site_id, db_conn)
 
+    def get_file_manager(self, db_conn):
+        '''Gets the file manager for this recorder'''
+        return ndr_server.RecorderFileManager.get_for_recorder(self.config,
+                                                               self,
+                                                               db_conn)
+
     def set_recorder_sw_revision(self, image_build_date, image_type, db_conn):
         '''Sets the recorder's software revision, and image type and updates the database
            with that information'''

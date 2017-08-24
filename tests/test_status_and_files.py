@@ -20,16 +20,16 @@
 import unittest
 import os
 import logging
-import tempfile
-import shutil
+import hashlib
 
+import ndr
 import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
 STATUS_MSG= THIS_DIR + "/data/ingest/status.yml"
 
-class TestIngests(unittest.TestCase):
+class TestStatusAndFiles(unittest.TestCase):
     '''Tests various ingest cases'''
 
     @classmethod
@@ -76,3 +76,23 @@ class TestIngests(unittest.TestCase):
                                                   db_conn=self._db_connection)
         self.assertEqual(recorder.image_build_date, 1499734693)
         self.assertEqual(recorder.image_type, 'development')
+
+    def test_loading_file_to_file_manager(self):
+        '''Tests loading a file to the file manager'''
+        file_manager = self._recorder.get_file_manager(self._db_connection)
+
+        # We'll use the configuration file as a test of this
+        with open(TEST_CONFIG, 'rb') as f:
+            test_data = f.read()
+
+        # Calculate the reference SHA256 hash
+        sha256_hash = hashlib.sha256(test_data).hexdigest()
+
+        file_manager.add_or_update_file(ndr.NdrConfigurationFiles.NMAP_CONFIG,
+                                        test_data,
+                                        self._db_connection)
+
+        nmap_config_file = file_manager.file_info[ndr.NdrConfigurationFiles.NMAP_CONFIG]
+        self.assertEqual(nmap_config_file.file_type, ndr.NdrConfigurationFiles.NMAP_CONFIG)
+        self.assertIsNone(nmap_config_file.recorder_sha256)
+        self.assertEqual(nmap_config_file.expected_sha256, sha256_hash)

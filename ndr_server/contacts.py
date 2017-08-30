@@ -23,6 +23,7 @@ import smtplib
 import tempfile
 import os
 import subprocess
+import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -125,12 +126,17 @@ class Contact(object):
 
             # And send it on its way
             self.config.logger.info("Sending message to %s", self.value)
-            smtp_server = smtplib.SMTP(self.config.smtp_host)
-            smtp_server.starttls()
-            if self.config.smtp_username is not None:
-                smtp_server.login(self.config.smtp_username, self.config.smtp_password)
-            smtp_server.sendmail(self.config.mail_from, self.value, message)
-            smtp_server.quit()
+            try:
+                smtp_server = smtplib.SMTP(self.config.smtp_host)
+                smtp_server.starttls()
+                if self.config.smtp_username is not None:
+                    smtp_server.login(self.config.smtp_username, self.config.smtp_password)
+                smtp_server.sendmail(self.config.mail_from, self.value, message)
+            except(smtplib.SMTPException, ConnectionError):
+                self.config.logger.error("Unable to send email to %s due to %s",
+                                         self.value, sys.exc_info()[0])
+            finally:
+                smtp_server.quit()
 
         elif self.method == ContactMethods.FILE:
             with open(self.value, 'w') as contact_file:

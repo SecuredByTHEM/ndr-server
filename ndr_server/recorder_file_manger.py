@@ -66,6 +66,10 @@ class RecorderFileManager(object):
                                            db_conn)
         self.refresh(db_conn) # to get the calculated SHA256 sums. This could be optimized ...
 
-    def get_file(self, file_type, db_conn):
+    def get_file(self, file_type: ndr.NdrConfigurationFiles, db_conn):
         '''Retrieves a file from the database'''
-        pass
+        file_id = self.file_info[file_type].pg_id
+        file_blob = bytes(self.config.database.run_procedure_fetchone("configs.get_file_blob",
+                                                                      [file_id],
+                                                                      db_conn)[0])
+        return file_blob

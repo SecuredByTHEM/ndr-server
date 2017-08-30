@@ -77,7 +77,7 @@ class TestStatusAndFiles(unittest.TestCase):
         self.assertEqual(recorder.image_build_date, 1499734693)
         self.assertEqual(recorder.image_type, 'development')
 
-    def test_loading_file_to_file_manager(self):
+    def test_loading_and_retrieving_file_to_file_manager(self):
         '''Tests loading a file to the file manager'''
         file_manager = self._recorder.get_file_manager(self._db_connection)
 
@@ -96,3 +96,7 @@ class TestStatusAndFiles(unittest.TestCase):
         self.assertEqual(nmap_config_file.file_type, ndr.NdrConfigurationFiles.NMAP_CONFIG)
         self.assertIsNone(nmap_config_file.recorder_sha256)
         self.assertEqual(nmap_config_file.expected_sha256, sha256_hash)
+
+        # Now we need to get the file back out and make sure the hash matches
+        nmap_db_read = file_manager.get_file(ndr.NdrConfigurationFiles.NMAP_CONFIG, self._db_connection)
+        self.assertEqual(test_data, nmap_db_read)

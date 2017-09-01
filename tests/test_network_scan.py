@@ -147,7 +147,7 @@ class TestIngests(unittest.TestCase):
         # Because the order is not promised by the database, we need to make sure that the
         # essential lines are there.
 
-        self.assertIn("MAC Address: 40:16:7e:6c:04:92", msg)
+        self.assertIn("MAC Address: 40:16:7E:6C:04:92", msg)
         self.assertIn("Manufacturer: Asustek Computer", msg)
         self.assertIn("Detection Method: arp-response", msg)
 
@@ -163,7 +163,7 @@ class TestIngests(unittest.TestCase):
             alert_contents = f.read()
 
         # Like before, let's make sure we have the essentials there
-        self.assertIn("MAC Address: 40:16:7e:6c:04:92", alert_contents)
+        self.assertIn("MAC Address: 40:16:7E:6C:04:92", alert_contents)
         self.assertIn("Manufacturer: Asustek Computer", alert_contents)
         self.assertIn("Detection Method: arp-response", alert_contents)
 

@@ -195,25 +195,36 @@ class TrafficReport(object):
 
         # Now work out the percentages per target
         for _, country_entry in statistics_dict.items():
-            country_entry['transmit_percentage'] = (
-                "{0:.2f}".format(
-                    ((country_entry['txpackets'] / total_txpackets) * 100))
-            )
-            country_entry['receive_percentage'] = (
-                "{0:.2f}".format(
-                    ((country_entry['rxpackets'] / total_rxpackets) * 100))
-            )
-
+            try:
+                country_entry['transmit_percentage'] = (
+                    "{0:.2f}".format(
+                        ((country_entry['txpackets'] / total_txpackets) * 100))
+                )
+                country_entry['receive_percentage'] = (
+                    "{0:.2f}".format(
+                        ((country_entry['rxpackets'] / total_rxpackets) * 100))
+                )
+            except ZeroDivisionError:
+                # If we divide by zero, catch it and handle it
+                country_entry['transmit_percentage'] = "{0:.2f}".format(0)
+                country_entry['receive_percentage'] = "{0:.2f}".format(0)
+                
             # If we have a subdivision, let's do for them, based on these percentages
             for _, subdivision_entry in country_entry['subdivisions'].items():
-                subdivision_entry['transmit_percentage'] = (
-                    "{0:.2f}".format(
-                        ((subdivision_entry['txpackets'] / country_entry['txpackets']) * 100))
-                )
-                subdivision_entry['receive_percentage'] = (
-                    "{0:.2f}".format(
-                        ((subdivision_entry['rxpackets'] / country_entry['rxpackets']) * 100))
-                )
+                try:
+                    subdivision_entry['transmit_percentage'] = (
+                        "{0:.2f}".format(
+                            ((subdivision_entry['txpackets'] / country_entry['txpackets']) * 100))
+                    )
+                    subdivision_entry['receive_percentage'] = (
+                        "{0:.2f}".format(
+                            ((subdivision_entry['rxpackets'] / country_entry['rxpackets']) * 100))
+                    )
+                except ZeroDivisionError:
+                    # It's possible to get a divide by zero here if we've only transmitted or sent
+                    # Zero out the subdivision percentages if that happen
+                    subdivision_entry['transmit_percentage'] = "{0:.2f}".format(0)
+                    subdivision_entry['receive_percentage'] = "{0:.2f}".format(0)
 
         # Save the results to the object
         self.statistics_dicts = statistics_dict

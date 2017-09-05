@@ -235,3 +235,4 @@ class TrafficReport(object):
         '''Generates a report email breaking down traffic by country destination'''
 
         tr_email = ndr_server.TrafficReportMessage(self.organization, self.site, self)
+        return tr_email

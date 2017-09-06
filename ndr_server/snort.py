@@ -113,9 +113,11 @@ class TrafficReport(object):
             # We only care about a network if one address is global, and one end isn't
             if (traffic_dict['src'].is_global is True and
                     traffic_dict['dst'].is_global is False):
+                local_ip = traffic_dict['dst']
                 global_ip = traffic_dict['src']
             elif (traffic_dict['dst'].is_global is True and
                   traffic_dict['src'].is_global is False):
+                local_ip = traffic_dict['src']
                 global_ip = traffic_dict['dst']
             else:
                 # Don't care about this IP
@@ -131,6 +133,8 @@ class TrafficReport(object):
                 traffic_dict['country'] = geoip_entry.country.name
                 traffic_dict['subdivision'] = geoip_entry.subdivisions.most_specific.name
                 traffic_dict['city'] = geoip_entry.city.name
+                traffic_dict['geoip_found'] = True
+                traffic_dict['local_ip'] = local_ip
                 new_traffic_dicts.append(traffic_dict)
             except geoip2.errors.AddressNotFoundError:
                 # List it as unknown
@@ -142,6 +146,37 @@ class TrafficReport(object):
         # And clean up after ourselves
         self.traffic_dicts = new_traffic_dicts
         geoip_db.close()
+
+    def breakdown_traffic_by_internal_ip(self):
+        '''Breaks down traffic by machine and destination'''
+
+        local_machine_dict = {}
+
+        for traffic_dict in self.traffic_dicts:
+            # Skip rows we're not interested in
+            if traffic_dict.get('geoip_found', False) is False:
+                continue
+            
+            country_stats_dict_key = traffic_dict['country']
+            local_ip = traffic_dict['local_ip']
+
+            # Create the local_machine dict if we don't have it
+            if traffic_dict['local_ip'] not in local_machine_dict:
+                local_machine_dict[local_ip] = {}
+                local_machine_dict[local_ip]['country'] = {}
+            
+            this_machine = local_machine_dict[local_ip]
+
+            if country_stats_dict_key not in this_machine['country']:
+                this_machine['country'][country_stats_dict_key] = {}
+                this_machine['country'][country_stats_dict_key]['rxpackets'] = 0
+                this_machine['country'][country_stats_dict_key]['txpackets'] = 0
+
+            this_country = this_machine['country'][country_stats_dict_key]
+            this_country['rxpackets'] += traffic_dict['rxpackets']
+            this_country['txpackets'] += traffic_dict['txpackets']
+
+        return local_machine_dict
 
     def generate_statistics(self):
         '''Works out the number of unique destinations, the total packet counts, and breakdown

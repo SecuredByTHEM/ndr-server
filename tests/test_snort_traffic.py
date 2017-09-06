@@ -20,6 +20,7 @@ import os
 import logging
 import tempfile
 import shutil
+import ipaddress
 
 import geoip2
 import ndr_server
@@ -130,3 +131,16 @@ class TestTrafficReporting(unittest.TestCase):
         traffic_report.process_dicts()
         traffic_report.generate_statistics()
         traffic_report.generate_report_emails()
+
+    def test_breakdown_by_machine(self):
+        '''Tests breaking down traffic by machine'''
+        self.ingest_file(SNORT_TRAFFIC_LOG)
+
+        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+            self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
+        traffic_report.process_dicts()
+        local_breakdown = traffic_report.breakdown_traffic_by_internal_ip()
+
+        key = ipaddress.ip_address("192.168.2.2")
+        self.assertEqual(local_breakdown[key]['country']['United States']['rxpackets'], 18000)
+        self.assertEqual(local_breakdown[key]['country']['United States']['txpackets'], 96)

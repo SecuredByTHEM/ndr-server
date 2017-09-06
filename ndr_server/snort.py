@@ -134,6 +134,7 @@ class TrafficReport(object):
                 traffic_dict['subdivision'] = geoip_entry.subdivisions.most_specific.name
                 traffic_dict['city'] = geoip_entry.city.name
                 traffic_dict['geoip_found'] = True
+                traffic_dict['global_ip'] = global_ip
                 traffic_dict['local_ip'] = local_ip
                 new_traffic_dicts.append(traffic_dict)
             except geoip2.errors.AddressNotFoundError:
@@ -164,7 +165,8 @@ class TrafficReport(object):
             if traffic_dict['local_ip'] not in local_machine_dict:
                 local_machine_dict[local_ip] = {}
                 local_machine_dict[local_ip]['country'] = {}
-            
+                local_machine_dict[local_ip]['remote_ips'] = set()
+
             this_machine = local_machine_dict[local_ip]
 
             if country_stats_dict_key not in this_machine['country']:
@@ -175,6 +177,7 @@ class TrafficReport(object):
             this_country = this_machine['country'][country_stats_dict_key]
             this_country['rxpackets'] += traffic_dict['rxpackets']
             this_country['txpackets'] += traffic_dict['txpackets']
+            this_machine['remote_ips'].add(traffic_dict['global_ip'])
 
         return local_machine_dict
 

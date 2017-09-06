@@ -141,6 +141,9 @@ class TestTrafficReporting(unittest.TestCase):
         traffic_report.process_dicts()
         local_breakdown = traffic_report.breakdown_traffic_by_internal_ip()
 
+        import pprint
+        pprint.pprint(local_breakdown)
+
         key = ipaddress.ip_address("192.168.2.2")
         self.assertEqual(local_breakdown[key]['country']['United States']['rxpackets'], 18000)
         self.assertEqual(local_breakdown[key]['country']['United States']['txpackets'], 96)

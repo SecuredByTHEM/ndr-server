@@ -157,7 +157,7 @@ class TrafficReport(object):
             # Skip rows we're not interested in
             if traffic_dict.get('geoip_found', False) is False:
                 continue
-            
+
             country_stats_dict_key = traffic_dict['country']
             local_ip = traffic_dict['local_ip']
 
@@ -165,7 +165,6 @@ class TrafficReport(object):
             if traffic_dict['local_ip'] not in local_machine_dict:
                 local_machine_dict[local_ip] = {}
                 local_machine_dict[local_ip]['country'] = {}
-                local_machine_dict[local_ip]['remote_ips'] = set()
 
             this_machine = local_machine_dict[local_ip]
 
@@ -173,11 +172,12 @@ class TrafficReport(object):
                 this_machine['country'][country_stats_dict_key] = {}
                 this_machine['country'][country_stats_dict_key]['rxpackets'] = 0
                 this_machine['country'][country_stats_dict_key]['txpackets'] = 0
+                this_machine['country'][country_stats_dict_key]['remote_ips'] = set()
 
             this_country = this_machine['country'][country_stats_dict_key]
             this_country['rxpackets'] += traffic_dict['rxpackets']
             this_country['txpackets'] += traffic_dict['txpackets']
-            this_machine['remote_ips'].add(traffic_dict['global_ip'])
+            this_country['remote_ips'].add(traffic_dict['global_ip'].compressed)
 
         return local_machine_dict
 
@@ -269,8 +269,17 @@ class TrafficReport(object):
         self.total_rxpackets = total_rxpackets
         self.total_txpackets = total_txpackets
 
-    def generate_report_emails(self):
+    def generate_report_emails(self, send=True, db_conn=None):
         '''Generates a report email breaking down traffic by country destination'''
 
         tr_email = ndr_server.TrafficReportMessage(self.organization, self.site, self)
+
+        if send is True:
+            alert_contacts = self.organization.get_contacts(db_conn=db_conn)
+
+            for contact in alert_contacts:
+                contact.send_message(
+                    tr_email.subject(), tr_email.prepped_message()
+                )
+
         return tr_email

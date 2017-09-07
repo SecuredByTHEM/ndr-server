@@ -143,6 +143,7 @@ class Contact(object):
                 contact_file.write(message)
         else:
             raise ValueError('Unknown contact method!')
+
 class ContactMethods(Enum):
     '''Known methods to contact folks'''
     EMAIL = "email"

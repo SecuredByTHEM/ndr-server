@@ -71,3 +71,18 @@ class Site(object):
         site = cls(config)
         return site.from_dict(config.database.run_procedure_fetchone(
             "admin.select_site_by_name", [site_name], existing_db_conn=db_conn))
+
+    @classmethod
+    def retrieve_all(cls, config, db_conn):
+        '''Retrieves all sites in the database'''
+
+        cursor = config.database.run_procedure(
+            "admin.get_all_site_ids", [], existing_db_conn=db_conn)
+
+        sites = []
+        for site_id in cursor.fetchall():
+            site = cls.read_by_id(config, site_id[0], db_conn)
+            sites.append(site)
+
+        cursor.close()
+        return sites

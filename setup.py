@@ -34,6 +34,7 @@ setup(
             'ndr-ingest-server = ndr_server.tools.server:main',
             'ndr-process-enlistments = ndr_server.tools.process_enlistment:main',
             'ndr-reboot-recorder = ndr_server.tools.reboot_recorder:main'
+            'ndr-run-daily = ndr_server.tools.run_daily:main'
         ]
     },
     test_suite="tests"

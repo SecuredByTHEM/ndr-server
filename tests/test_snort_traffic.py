@@ -65,11 +65,20 @@ class TestTrafficReporting(unittest.TestCase):
             cls._nsc, cls._test_site, "Test Recorder", "ndr_test_ingest",
             db_conn=cls._db_connection)
 
+        # We need a test file contact
+        file_descriptor, cls._test_contact = tempfile.mkstemp()
+        os.close(file_descriptor) # Don't need to write anything to it
+
+        ndr_server.Contact.create(
+            cls._nsc, cls._test_org, "file", cls._test_contact,
+            db_conn=cls._db_connection)
+
     @classmethod
     def tearDownClass(cls):
         cls._db_connection.rollback()
         cls._nsc.database.close()
         shutil.rmtree(cls._testdir)
+        os.remove(cls._test_contact)
 
     def ingest_file(self, filename):
         '''Simply feeds in the response for an ingest test'''
@@ -130,7 +139,13 @@ class TestTrafficReporting(unittest.TestCase):
 
         traffic_report.process_dicts()
         traffic_report.generate_statistics()
-        traffic_report.generate_report_emails()
+
+        traffic_report.generate_report_emails(send=True, db_conn=self._db_connection)
+
+        with open(self._test_contact, 'r') as f:
+            alert_email = f.read()
+
+        self.assertIn("This is a snapshot of internet traffic broken down by destination IP", alert_email)
 
     def test_breakdown_by_machine(self):
         '''Tests breaking down traffic by machine'''
@@ -140,9 +155,6 @@ class TestTrafficReporting(unittest.TestCase):
             self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
         traffic_report.process_dicts()
         local_breakdown = traffic_report.breakdown_traffic_by_internal_ip()
-
-        import pprint
-        pprint.pprint(local_breakdown)
 
         key = ipaddress.ip_address("192.168.2.2")
         self.assertEqual(local_breakdown[key]['country']['United States']['rxpackets'], 18000)

@@ -70,5 +70,15 @@ class TestSites(unittest.TestCase):
                           db_conn=db2)
         db2.close()
 
+    def test_retrieve_all(self):
+        '''Tests retrieving all sites from the database'''
+        site1 = ndr_server.Site.create(self._nsc, self._test_org, "Test 3", db_conn=self._db_connection)
+        site2 = ndr_server.Site.create(self._nsc, self._test_org, "Test 4", db_conn=self._db_connection)
+
+        sites = ndr_server.Site.retrieve_all(self._nsc, self._db_connection)
+
+        self.assertIn(site1, sites)
+        self.assertIn(site2, sites)
+
 if __name__ == '__main__':
     unittest.main()

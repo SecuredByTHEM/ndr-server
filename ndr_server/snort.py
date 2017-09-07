@@ -101,6 +101,10 @@ class TrafficReport(object):
         new_traffic_dicts = []
         geoip_db = geoip2.database.Reader(self.config.geoip_db)
 
+        # The traffic_dict can be empty if there's no traffic records for a given period
+        if self.traffic_dicts is None:
+            return False
+
         # We'll simply copy over the information we want, and discard what we don't
         for traffic_dict in self.traffic_dicts:
             # Simple things first, we need to convert src/dst to ipaddress objects
@@ -147,6 +151,9 @@ class TrafficReport(object):
         # And clean up after ourselves
         self.traffic_dicts = new_traffic_dicts
         geoip_db.close()
+
+        # Confirm we ran successfully
+        return True
 
     def breakdown_traffic_by_internal_ip(self):
         '''Breaks down traffic by machine and destination'''

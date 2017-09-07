@@ -47,13 +47,16 @@ def main():
     sites = ndr_server.Site.retrieve_all(nsc, db_conn)
 
     for site in sites:
-        nsc.logger.info("Processing site (%d): %s", site.pg_id, site.name)
+        nsc.logger.info("Processing site %s (%d)", site.name, site.pg_id)
         traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
             nsc, site, 86400, db_conn=db_conn)
 
-        traffic_report.process_dicts()
-        traffic_report.generate_statistics()
-        traffic_report.generate_report_emails(send=True, db_conn=db_conn)
+        success = traffic_report.process_dicts()
+        if success is True:
+            traffic_report.generate_statistics()
+            traffic_report.generate_report_emails(send=True, db_conn=db_conn)
+        else:
+            nsc.logger.warning("Failed to process traffic dicts for site %d", site.pg_id)
 
     db_conn.commit()
 

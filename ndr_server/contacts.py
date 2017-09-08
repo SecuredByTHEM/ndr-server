@@ -131,7 +131,7 @@ class Contact(object):
                 smtp_server.starttls()
                 if self.config.smtp_username is not None:
                     smtp_server.login(self.config.smtp_username, self.config.smtp_password)
-                smtp_server.sendmail(self.config.mail_from, self.value, message)
+                smtp_server.sendmail(self.config.mail_from, self.value, bytes(message, 'utf-8'))
             except(smtplib.SMTPException, ConnectionError):
                 self.config.logger.error("Unable to send email to %s due to %s",
                                          self.value, sys.exc_info()[0])

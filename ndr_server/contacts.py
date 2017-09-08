@@ -114,7 +114,7 @@ class Contact(object):
             mime_msg['To'] = self.value
             mime_msg['Subject'] = subject
             body = message
-            mime_msg.attach(MIMEText(body, 'plain'))
+            mime_msg.attach(MIMEText(body.encode('utf-8'), 'plain'))
 
             message = mime_msg.as_string()
 

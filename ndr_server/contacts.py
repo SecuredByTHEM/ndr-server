@@ -114,9 +114,9 @@ class Contact(object):
             mime_msg['To'] = self.value
             mime_msg['Subject'] = subject
             body = message
-            mime_msg.attach(MIMEText(body.encode('utf-8'), 'plain'))
+            mime_msg.attach(MIMEText(body, 'plain'))
 
-            message = mime_msg.as_string()
+            message = mime_msg.__str__() # Required to get UTF-8 email
 
         if self.method == ContactMethods.EMAIL:
             if self.config.smtp_disabled:

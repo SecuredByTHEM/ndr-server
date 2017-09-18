@@ -1,5 +1,5 @@
 dist: trusty
-sudo: false
+sudo: true
 
 language: python
 
@@ -10,6 +10,7 @@ addons:
   postgresql: "9.5"
 
 before_script:
+  - sudo apt-get install postgresql-plperl
   - wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
   - tar zxvf flyway-commandline-4.2.0-linux-x64.tar.gz
   - psql -c 'create database ndr_test;' -U postgres

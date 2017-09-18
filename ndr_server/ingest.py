@@ -157,7 +157,7 @@ class IngestServer():
 
         # SNORT Traffic
         elif message.message_type == ndr.IngestMessageTypes.SNORT_TRAFFIC:
-            ndr_server.TrafficLog.create_from_message(
+            ndr_server.SnortTrafficLog.create_from_message(
                 self.config, recorder, log_id, message, db_conn=db_connection
             )
 

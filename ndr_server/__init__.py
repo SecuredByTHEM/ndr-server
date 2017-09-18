@@ -29,6 +29,6 @@ from ndr_server.templates import (
     TrafficReportMessage
 )
 from ndr_server.snort import (
-    TrafficLog,
-    TrafficReport
+    SnortTrafficLog,
+    SnortTrafficReport
 )

@@ -10,7 +10,21 @@ addons:
   postgresql: "9.5"
 
 before_script:
+  # Install PL/Perl
   - sudo apt-get install postgresql-plperl-9.5
+  - sudo apt-get install libnet-ip-perl
+
+  # Install IP2Location Perl bindings
+  - wget https://github.com/ip2location/ip2location-perl/archive/master.zip
+  - unzip master.zip
+  - pushd ip2location-perl-master
+  - perl Makefile.PL
+  - make
+  - make test
+  - make install
+  - popd
+
+  # Grab flyway and initial the database
   - wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
   - tar zxvf flyway-commandline-4.2.0-linux-x64.tar.gz
   - psql -c 'create database ndr_test;' -U postgres

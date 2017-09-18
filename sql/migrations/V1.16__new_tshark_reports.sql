@@ -12,7 +12,7 @@ CREATE TABLE traffic_report.seen_hostnames (
     hostname text NOT NULL
 );
 
-CREATE TABLE traffic_report.known_internet_domains (
+CREATE TABLE traffic_report.known_internet_hostnames(
     id bigserial NOT NULL PRIMARY KEY,
     ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
     hostname_id bigint NOT NULL REFERENCES traffic_report.seen_hostnames(id),
@@ -36,13 +36,17 @@ CREATE TABLE traffic_report.traffic_reports (
     duration real NOT NULL 
 );
 
+CREATE INDEX ON traffic_report.traffic_reports(msg_id);
+
 -- Creates a reference between the traffic report, and known internet domains
-CREATE TABLE traffic_report.traffic_report_domains (
+CREATE TABLE traffic_report.traffic_report_internet_hostnames (
     id bigserial NOT NULL PRIMARY KEY,
     traffic_report_id bigint NOT NULL REFERENCES traffic_report.traffic_reports(id),
-    internet_domain_id bigint NOT NULL REFERENCES traffic_report.known_internet_domains(id),
-    UNIQUE(traffic_report_id, internet_domain_id)
+    internet_hostname_id bigint NOT NULL REFERENCES traffic_report.known_internet_hostnames(id),
+    UNIQUE(traffic_report_id, internet_hostname_id)
 );
+
+CREATE INDEX ON traffic_report.traffic_report_internet_hostnames(traffic_report_id);
 
 CREATE TABLE traffic_report.network_outbound_traffic (
     id bigserial NOT NULL PRIMARY KEY,
@@ -75,3 +79,4 @@ CREATE TABLE traffic_report.geoip_information (
 
 CREATE INDEX ON traffic_report.geoip_information(ip_id);
 
+-- This index should have existed awhile ago

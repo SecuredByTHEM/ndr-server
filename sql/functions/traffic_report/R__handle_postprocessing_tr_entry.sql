@@ -116,7 +116,7 @@ unless ($geodb->get_region($global_ip) =~ "You can evaluate IP address from") {
 
 # If there was a hostname attached with the global IP, we need to register it
 if (defined $global_hostname_id) {
-    my $register_proc = 'SELECT * FROM traffic_report.register_internet_domain_from_tr($1, $2, $3)';
+    my $register_proc = 'SELECT * FROM traffic_report.register_internet_hostname_from_tr($1, $2, $3)';
     my $register_sp = spi_prepare($register_proc, 'bigint', 'bigint', 'bigint');
     spi_exec_prepared($register_sp, $_[0], $global_ip_id, $global_hostname_id);
 }

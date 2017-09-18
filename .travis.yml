@@ -21,7 +21,7 @@ before_script:
   - perl Makefile.PL
   - make
   - make test
-  - make install
+  - sudo make install
   - popd
 
   # Grab flyway and initial the database

@@ -12,12 +12,12 @@ CREATE TABLE traffic_report.seen_hostnames (
     hostname text NOT NULL
 );
 
-CREATE TABLE traffic_report.known_internet_hostnames (
+CREATE TABLE traffic_report.known_internet_domains (
     id bigserial NOT NULL PRIMARY KEY,
-    ip_id bigint NOT NULL REFERENCES traffic_report.seen_hostnames(id),
-    domain_name text NOT NULL,
+    ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
+    hostname_id bigint NOT NULL REFERENCES traffic_report.seen_hostnames(id),
     first_seen timestamp without time zone DEFAULT now() NOT NULL,
-    most_recently_seen timestamp without time zone DEFAULT now() NOT NULL
+    last_seen timestamp without time zone DEFAULT now() NOT NULL
 );
 
 CREATE TABLE traffic_report.traffic_reports (
@@ -36,12 +36,20 @@ CREATE TABLE traffic_report.traffic_reports (
     duration real NOT NULL 
 );
 
+-- Creates a reference between the traffic report, and known internet domains
+CREATE TABLE traffic_report.traffic_report_domains (
+    id bigserial NOT NULL PRIMARY KEY,
+    traffic_report_id bigint NOT NULL REFERENCES traffic_report.traffic_reports(id),
+    internet_domain_id bigint NOT NULL REFERENCES traffic_report.known_internet_domains(id),
+    UNIQUE(traffic_report_id, internet_domain_id)
+);
+
 CREATE TABLE traffic_report.network_outbound_traffic (
-    id bigserial NOT NULL,
+    id bigserial NOT NULL PRIMARY KEY,
+    msg_id bigint NOT NULL REFERENCES public.recorder_messages(id),
     traffic_report_id bigint NOT NULL REFERENCES traffic_report.traffic_reports(id),
     local_ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
     global_ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
-    internet_host bigint NOT NULL REFERENCES traffic_report.known_internet_hostnames(id),
     geoip_database_version text NOT NULL,
     country_code char(2),
     country_name text,
@@ -50,3 +58,20 @@ CREATE TABLE traffic_report.network_outbound_traffic (
     isp text,
     domain text
 );
+
+CREATE TABLE traffic_report.geoip_information (
+    id bigserial NOT NULL PRIMARY KEY,
+    ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
+    entry_created timestamp without time zone NOT NULL DEFAULT NOW(),
+    geoip_database_version text NOT NULL,
+    country_code char(2),
+    country_name text,
+    region_name text,
+    city_name text,
+    isp text,
+    domain text,
+    UNIQUE(ip_id, geoip_database_version)
+);
+
+CREATE INDEX ON traffic_report.geoip_information(ip_id);
+

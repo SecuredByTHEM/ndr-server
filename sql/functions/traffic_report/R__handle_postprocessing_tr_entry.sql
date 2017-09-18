@@ -13,14 +13,16 @@ use Net::IP;
 use Geo::IP2Location;
 
 # First we need to grab the Traffic Report Entry that just got inserted and get it's magic
-my $sth = spi_query("SELECT * FROM snort.flattened_traffic_reports WHERE id=$_[0]");
+my $sth = spi_query("SELECT * FROM traffic_report.flattened_traffic_reports WHERE id=$_[0]");
 my $tr_row = spi_fetchrow($sth);
+spi_cursor_close($sth);
+
 if (! defined $tr_row) {
     elog(ERROR, "unable to find STR row ID $_[0]!");
 }
 
-my $src_ip = new Net::IP($tr_row->{'src'}) || elog(ERROR, "Net::IP died on src_ip $tr_row->{'src'}");
-my $dst_ip = new Net::IP($tr_row->{'dst'})  || elog(ERROR, "Net::IP died on dst_ip $tr_row->{'dst'}");
+my $src_ip = new Net::IP($tr_row->{'src_ip'}) || elog(ERROR, "Net::IP died on src_ip $tr_row->{'src'}");
+my $dst_ip = new Net::IP($tr_row->{'dst_ip'})  || elog(ERROR, "Net::IP died on dst_ip $tr_row->{'dst'}");
 
 # We're only interested in PRIVATE->PUBLIC communications. If we get a PUBLIC-PUBLIC result,
 # that means that we're dealing with IPv6, or a non-RFC1918 complaint IPv4 network which we
@@ -30,25 +32,28 @@ my $dst_ip = new Net::IP($tr_row->{'dst'})  || elog(ERROR, "Net::IP died on dst_
 my $src_ip_type = $src_ip->iptype();
 my $dst_ip_type = $dst_ip->iptype();
 
-my $global_ip;
-my $local_ip;
+my $global_ip = undef;
+my $local_ip = undef;
 
 # DB idents for IP addresses
-my $global_ip_id; 
-my $local_ip_id;
+my $global_ip_id = undef; 
+my $global_hostname_id = undef;
+my $local_ip_id = undef;
 
 # Outbound connections
 if ($src_ip_type eq 'PRIVATE' && $dst_ip_type eq 'PUBLIC') {
     $global_ip = $dst_ip->ip();
-    $global_ip_id = $tr_row->{'dst_id'};
+    $global_ip_id = $tr_row->{'dst_ip_id'};
+    $global_hostname_id = $tr_row->{'dst_hostname_id'};
     $local_ip = $src_ip->ip();
-    $local_ip_id = $tr_row->{'src_id'};
+    $local_ip_id = $tr_row->{'src_ip_id'};
     elog(WARNING, "Outbound connection");
 } elsif ($src_ip_type eq 'PUBLIC' && $dst_ip_type eq 'PRIVATE') {
     $global_ip = $src_ip->ip();
-    $global_ip_id = $tr_row->{'src_id'};
+    $global_ip_id = $tr_row->{'src_ip_id'};
+    $global_hostname_id = $tr_row->{'src_hostname_id'};
     $local_ip = $dst_ip->ip();
-    $local_ip_id = $tr_row->{'dst_id'};
+    $local_ip_id = $tr_row->{'dst_ip_id'};
     elog(WARNING, "Inbound connection");
 } elsif ($src_ip_type eq 'PUBLIC' && $dst_ip_type eq 'PUBLIC') {
     elog(ERROR, "PUBLIC-PUBLIC connections not supported!");
@@ -107,6 +112,13 @@ unless ($geodb->get_region($global_ip) =~ "You can evaluate IP address from") {
     elog(INFO, "Domain: $domain");
 } else {
     elog(WARNING, "Out of range for demo database.");
+}
+
+# If there was a hostname attached with the global IP, we need to register it
+if (defined $global_hostname_id) {
+    my $register_proc = 'SELECT * FROM traffic_report.register_internet_domain_from_tr($1, $2, $3)';
+    my $register_sp = spi_prepare($register_proc, 'bigint', 'bigint', 'bigint');
+    spi_exec_prepared($register_sp, $_[0], $global_ip_id, $global_hostname_id);
 }
 
 # Unlike PLPgSQL, inserting safely a bit more effort. We need to create an insert query plan, then

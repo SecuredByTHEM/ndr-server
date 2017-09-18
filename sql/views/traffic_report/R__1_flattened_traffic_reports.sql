@@ -13,7 +13,12 @@ CREATE OR REPLACE VIEW traffic_report.flattened_traffic_reports AS
         tr.rx_bytes,
         tr.tx_bytes,
         tr.start_timestamp,
-        tr.duration
+        tr.duration,
+        -- Needed for TR post processing
+        tr.src_ip_id,
+        tr.dst_ip_id,
+        tr.src_hostname_id,
+        tr.dst_hostname_id
     FROM traffic_report.traffic_reports AS tr
     LEFT JOIN network_scan.ip_addresses AS nsip_src ON (tr.src_ip_id=nsip_src.id)
     LEFT JOIN network_scan.ip_addresses AS nsip_dst ON (tr.dst_ip_id=nsip_dst.id)

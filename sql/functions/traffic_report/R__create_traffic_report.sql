@@ -66,7 +66,9 @@ CREATE OR REPLACE FUNCTION traffic_report.create_traffic_report(_message_id bigi
             _tx_bytes,
             TO_TIMESTAMP(_start_ts),
             _duration
-        );
+        ) RETURNING id INTO traffic_log_id;
 
+    -- Pass it off the plPerl script to do the postprocessing
+    PERFORM traffic_report.handle_postprocessing_tr_entry(traffic_log_id);
     END;
 $$;

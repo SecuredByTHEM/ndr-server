@@ -73,10 +73,9 @@ def main():
         human_name = cert.subject.get_attributes_for_oid(
             x509.NameOID.PSEUDONYM)[0].value
 
-        # Start a transaction and create the organization and site if needed
+        # Try to get the organization. If failure, it doesn't exist
         db_connection = nsc.database.get_connection()
 
-        # Try to get the organization. If failure, it doesn't exist
         try:
             organization = ndr_server.Organization.read_by_name(nsc, orgnaization_name, db_connection)
         except psycopg2.InternalError:
@@ -88,6 +87,9 @@ def main():
                 site = ndr_server.Site.read_by_name(nsc, ou_name, db_connection)
             except psycopg2.InternalError:
                 site = None
+
+        db_connection.rollback()
+        db_connection.close()
 
         print("Recorder Enlistment Request")
         print("Organization: ", orgnaization_name)
@@ -119,6 +121,9 @@ def main():
             continue # Go to the next
 
         local_install = False
+
+        # Start a transaction and create the organization and site if needed
+        db_connection = nsc.database.get_connection()
 
         if common_name == nsc.hostname:
             local = input("Certificate CN matches local hostname. Install certificates locally for server [Y/n]?")

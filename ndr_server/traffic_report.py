@@ -47,6 +47,23 @@ class TsharkTrafficReport(object):
         traffic_log.traffic_log = ingest_log
         traffic_log.pg_id = log_id
 
+        for traffic_entry in ingest_log.traffic_entries:
+            config.database.run_procedure(
+                "traffic_report.create_traffic_report",
+                [log_id,
+                 traffic_entry.protocol.value,
+                 traffic_entry.src_address.compressed,
+                 traffic_entry.src_hostname,
+                 traffic_entry.src_port,
+                 traffic_entry.dst_address.compressed,
+                 traffic_entry.dst_hostname,
+                 traffic_entry.dst_port,
+                 traffic_entry.rx_bytes,
+                 traffic_entry.tx_bytes,
+                 traffic_entry.start_timestamp,
+                 traffic_entry.duration],
+                existing_db_conn=db_conn)
+
         return traffic_log
 
 class TsharkTrafficReportManager(object):

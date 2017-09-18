@@ -32,3 +32,7 @@ from ndr_server.snort import (
     SnortTrafficLog,
     SnortTrafficReport
 )
+from ndr_server.traffic_report import (
+    TsharkTrafficReport,
+    TsharkTrafficReportManager
+)

@@ -161,6 +161,12 @@ class IngestServer():
                 self.config, recorder, log_id, message, db_conn=db_connection
             )
 
+        # TShark Traffic Reports
+        elif message.message_type == ndr.IngestMessageTypes.TRAFFIC_REPORT:
+            ndr_server.TsharkTrafficReport.create_from_message(
+                self.config, recorder, log_id, message, db_conn=db_connection
+            )
+
         # Recorder status message
         elif message.message_type == ndr.IngestMessageTypes.STATUS:
             # Status messages have two parts, one that is used to update the recorder's

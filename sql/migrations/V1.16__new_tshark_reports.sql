@@ -1,7 +1,10 @@
 -- New DB handling stuff is plperlu
 CREATE EXTENSION IF NOT EXISTS plperlu;
 
+ALTER TYPE recorder_message_type ADD VALUE 'traffic_report';
+
 CREATE SCHEMA IF NOT EXISTS traffic_report;
+GRANT USAGE ON SCHEMA traffic_report TO ndr_ingest;
 
 CREATE TABLE traffic_report.known_internet_hostnames (
     id bigserial NOT NULL PRIMARY KEY,

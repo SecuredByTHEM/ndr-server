@@ -29,6 +29,7 @@ NMAP_ARP_SCAN = THIS_DIR + "/data/ingest/nmap_arp_scan.yml"
 SYSLOG_SCAN = THIS_DIR + "/data/ingest/syslog_upload.yml"
 TEST_ALERT_MESSAGE = THIS_DIR + "/data/ingest/test_alert.yml"
 SNORT_TRAFFIC_LOG = THIS_DIR + "/data/ingest/snort_traffic_log.yml"
+TRAFFIC_REPORT_LOG = THIS_DIR + "/data/ingest/traffic_report.yml"
 ALERT_MSG_LOG = THIS_DIR + "/data/ingest/alert_msg.yml"
 STATUS_MSG = THIS_DIR + "/data/ingest/status.yml"
 
@@ -106,6 +107,10 @@ class TestIngests(unittest.TestCase):
     def test_ingesting_status_msg(self):
         '''Tests ingesting a status message'''
         self.ingest_test_file(STATUS_MSG)
+
+    def test_ingesting_traffic_report_msg(self):
+        '''Tests ingesting a traffic report'''
+        self.ingest_test_file(TRAFFIC_REPORT_LOG)
 
 if __name__ == '__main__':
     unittest.main()

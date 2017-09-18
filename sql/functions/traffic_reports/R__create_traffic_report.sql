@@ -9,8 +9,8 @@ CREATE OR REPLACE FUNCTION traffic_report.create_traffic_report(_message_id bigi
                                                                 _dst inet,
                                                                 _dst_hostname text,
                                                                 _dst_port int,
-                                                                _rxpackets bigint,
-                                                                _txpackets bigint,
+                                                                _rx_bytes bigint,
+                                                                _tx_bytes bigint,
                                                                 _start_ts bigint,
                                                                 _duration real)
     RETURNS void
@@ -42,24 +42,30 @@ CREATE OR REPLACE FUNCTION traffic_report.create_traffic_report(_message_id bigi
 
         INSERT INTO traffic_report.traffic_reports (
             msg_id,
-            dst,
-            src,
-            ethsrc_id,
-            ethdst_id,
-            proto,
-            rxpackets,
-            txpackets,
-            firstseen
+            protocol,
+            src_ip_id,
+            src_hostname_id,
+            src_port,
+            dst_ip_id,
+            dst_hostname_id,
+            dst_port,
+            rx_bytes,
+            tx_bytes,
+            start_timestamp,
+            duration
         ) VALUES (
             _message_id,
-            dst_ip_address_id,
+            _protocol,
             src_ip_address_id,
-            src_mac_address_id,
-            dst_mac_address_id,
-            _proto,
-            _rxpackets,
-            _txpackets,
-            TO_TIMESTAMP(_firstseen_ts)
+            src_hostname_id,
+            _src_port,
+            dst_ip_address_id,
+            dst_hostname_id,
+            _dst_port,
+            _rx_bytes,
+            _tx_bytes,
+            TO_TIMESTAMP(_start_ts),
+            _duration
         );
 
     END;

@@ -29,12 +29,12 @@ CREATE OR REPLACE FUNCTION traffic_report.create_traffic_report(_message_id bigi
         dst_ip_address_id := network_scan.get_or_create_ip_address(_dst);
 
         -- If we have a hostname, register it and get it's ID
-        if _src_hostname != NULL THEN
-            src_hostname_id := network_scan.get_or_create_hostname(_src_hostname);
+        if _src_hostname IS NOT NULL THEN
+            src_hostname_id := traffic_report.get_or_create_tr_hostname(_src_hostname);
         END IF;
 
-        if _dst_hostname != NULL THEN
-            src_hostname_id := network_scan.get_or_create_hostname(_src_hostname);
+        if _dst_hostname IS NOT NULL THEN
+            dst_hostname_id := traffic_report.get_or_create_tr_hostname(_dst_hostname);
         END IF;
 
         -- Strictly speaking we could tie this to network scan ports, but that doesn't make

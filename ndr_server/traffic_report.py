@@ -85,62 +85,6 @@ class TsharkTrafficReportManager(object):
     def process_dicts(self):
         '''Goes through the traffic report, and deletes local network traffic'''
 
-        new_traffic_dicts = []
-        geoip_db = geoip2.database.Reader(self.config.geoip_db)
-
-        # The traffic_dict can be empty if there's no traffic records for a given period
-        if self.traffic_dicts is None:
-            return False
-
-        # We'll simply copy over the information we want, and discard what we don't
-        for traffic_dict in self.traffic_dicts:
-            # Simple things first, we need to convert src/dst to ipaddress objects
-            traffic_dict['src'] = ipaddress.ip_address(traffic_dict['src'])
-            traffic_dict['dst'] = ipaddress.ip_address(traffic_dict['dst'])
-
-            # Global IP is what we'll run the GeoIP report on
-            global_ip = None
-
-            # We only care about a network if one address is global, and one end isn't
-            if (traffic_dict['src'].is_global is True and
-                    traffic_dict['dst'].is_global is False):
-                local_ip = traffic_dict['dst']
-                global_ip = traffic_dict['src']
-            elif (traffic_dict['dst'].is_global is True and
-                  traffic_dict['src'].is_global is False):
-                local_ip = traffic_dict['src']
-                global_ip = traffic_dict['dst']
-            else:
-                # Don't care about this IP
-                continue
-
-            # Make sure we're not dealing w/ a multicast address
-            if global_ip.is_multicast is True:
-                continue
-
-            try:
-                # Run the IP through the database and see what we get
-                geoip_entry = geoip_db.city(global_ip.compressed)
-                traffic_dict['country'] = geoip_entry.country.name
-                traffic_dict['subdivision'] = geoip_entry.subdivisions.most_specific.name
-                traffic_dict['city'] = geoip_entry.city.name
-                traffic_dict['geoip_found'] = True
-                traffic_dict['global_ip'] = global_ip
-                traffic_dict['local_ip'] = local_ip
-                new_traffic_dicts.append(traffic_dict)
-            except geoip2.errors.AddressNotFoundError:
-                # List it as unknown
-                traffic_dict['country'] = "Unknown"
-                traffic_dict['subdivision'] = None
-                traffic_dict['city'] = "Unknown"
-                new_traffic_dicts.append(traffic_dict)
-
-        # And clean up after ourselves
-        self.traffic_dicts = new_traffic_dicts
-        geoip_db.close()
-
-        # Confirm we ran successfully
-        return True
 
     def breakdown_traffic_by_internal_ip(self):
         '''Breaks down traffic by machine and destination'''

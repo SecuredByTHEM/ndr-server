@@ -1,4 +1,4 @@
-CREATE FUNCTION admin.select_organization_by_name(org_name text) RETURNS SETOF public.organizations
+CREATE OR REPLACE FUNCTION admin.select_organization_by_name(org_name text) RETURNS SETOF public.organizations
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$
 BEGIN

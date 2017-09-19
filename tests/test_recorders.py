@@ -18,19 +18,23 @@
 import unittest
 import os
 import logging
+from datetime import datetime, timedelta
 
+import tests.util
+import ndr
 import ndr_server
 import psycopg2
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
-
+STATUS_MSG = THIS_DIR + "/data/ingest/status.yml"
 
 class TestSites(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Now load a global config object so the DB connection is open
-        cls._nsc = ndr_server.Config(logging.NullHandler(), TEST_CONFIG)
+        logging.getLogger().addHandler(logging.NullHandler())
+        cls._nsc = ndr_server.Config(logging.getLogger(), TEST_CONFIG)
         cls._db_connection = cls._nsc.database.get_connection()
 
         # For this specific test, we need to create a few test objects
@@ -38,6 +42,9 @@ class TestSites(unittest.TestCase):
             cls._nsc, "Testing Recorders Org", db_conn=cls._db_connection)
         cls._test_site = ndr_server.Site.create(
             cls._nsc, cls._test_org, "Testing Recorders Site", db_conn=cls._db_connection)
+        cls._recorder = ndr_server.Recorder.create(
+            cls._nsc, cls._test_site, "Test Recorder Ingest", "ndr_test_ingest",
+            db_conn=cls._db_connection)
 
     @classmethod
     def tearDownClass(cls):
@@ -97,6 +104,30 @@ class TestSites(unittest.TestCase):
 
         self.assertEqual(recorder_read.image_type, "test")
         self.assertEqual(recorder_read.image_build_date, 12345678)
+
+    def test_get_message_ids_recieved_in_time_period(self):
+        '''Check that we can get message IDs of recieved messages'''
+
+        # First ingest a test file and see if we can get one ID back
+        tests.util.ingest_test_file(self, STATUS_MSG)
+        msg_ids = self._recorder.get_message_ids_recieved_in_time_period(
+            ndr.IngestMessageTypes.STATUS,
+            datetime.now() - timedelta(days=1),
+            datetime.now(),
+            self._db_connection
+        )
+
+        self.assertEqual(len(msg_ids), 1)
+
+        # Now try one with now(),now() which shouldn't return anything
+        msg_ids = self._recorder.get_message_ids_recieved_in_time_period(
+            ndr.IngestMessageTypes.STATUS,
+            datetime.now(),
+            datetime.now(),
+            self._db_connection
+        )
+
+        self.assertIsNone(msg_ids)
 
 if __name__ == '__main__':
     unittest.main()

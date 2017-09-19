@@ -63,20 +63,5 @@ CREATE TABLE traffic_report.network_outbound_traffic (
     domain text
 );
 
-CREATE TABLE traffic_report.geoip_information (
-    id bigserial NOT NULL PRIMARY KEY,
-    ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
-    entry_created timestamp without time zone NOT NULL DEFAULT NOW(),
-    geoip_database_version text NOT NULL,
-    country_code char(2),
-    country_name text,
-    region_name text,
-    city_name text,
-    isp text,
-    domain text,
-    UNIQUE(ip_id, geoip_database_version)
-);
-
-CREATE INDEX ON traffic_report.geoip_information(ip_id);
-
--- This index should have existed awhile ago
+CREATE INDEX ON traffic_report.network_outbound_traffic(country_name);
+CREATE INDEX ON traffic_report.network_outbound_traffic(region_name);

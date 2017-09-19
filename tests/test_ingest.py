@@ -22,6 +22,7 @@ import tempfile
 import shutil
 
 import ndr_server
+import tests.util
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
@@ -63,16 +64,6 @@ class TestIngests(unittest.TestCase):
         cls._nsc.database.close()
         shutil.rmtree(cls._testdir)
 
-    def ingest_test_file(self, filename):
-        '''Simply feeds in the response for an ingest test'''
-        file_contents = ""
-        with open(filename, 'r') as scanfile:
-            file_contents = scanfile.read()
-
-        ingest_daemon = ndr_server.IngestServer(self._nsc)
-
-        ingest_daemon.process_ingest_message(self._db_connection, self._recorder, file_contents)
-
     def test_incoming_directories_creation(self):
         '''Confirms that we can successfully create the directories we need to process messages'''
         ingest_daemon = ndr_server.IngestServer(self._nsc)
@@ -86,31 +77,31 @@ class TestIngests(unittest.TestCase):
 
     def test_nmap_ingest(self):
         '''Tests that an NMAP scan actually goes into the database'''
-        self.ingest_test_file(NMAP_ARP_SCAN)
+        tests.util.ingest_test_file(self, NMAP_ARP_SCAN)
 
     def test_syslog_ingest(self):
         '''Tests that an syslog ingest actually goes into the database'''
-        self.ingest_test_file(SYSLOG_SCAN)
+        tests.util.ingest_test_file(self, SYSLOG_SCAN)
 
     def test_alert_tester(self):
         '''Tests the Alert Test Message'''
-        self.ingest_test_file(TEST_ALERT_MESSAGE)
+        tests.util.ingest_test_file(self, TEST_ALERT_MESSAGE)
 
     def test_snort_traffic_ingest(self):
         '''Tests ingesting a snort traffic report'''
-        self.ingest_test_file(SNORT_TRAFFIC_LOG)
+        tests.util.ingest_test_file(self, SNORT_TRAFFIC_LOG)
 
     def test_ingesting_alert_msg(self):
         '''Tests ingesting a generic alert message'''
-        self.ingest_test_file(ALERT_MSG_LOG)
+        tests.util.ingest_test_file(self, ALERT_MSG_LOG)
 
     def test_ingesting_status_msg(self):
         '''Tests ingesting a status message'''
-        self.ingest_test_file(STATUS_MSG)
+        tests.util.ingest_test_file(self, STATUS_MSG)
 
     def test_ingesting_traffic_report_msg(self):
         '''Tests ingesting a traffic report'''
-        self.ingest_test_file(TRAFFIC_REPORT_LOG)
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
 
 if __name__ == '__main__':
     unittest.main()

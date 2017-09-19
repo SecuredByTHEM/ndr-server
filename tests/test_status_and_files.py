@@ -20,9 +20,8 @@
 import unittest
 import os
 import logging
-import tempfile
-import shutil
 
+import tests.util
 import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -56,20 +55,10 @@ class TestIngests(unittest.TestCase):
         cls._db_connection.rollback()
         cls._nsc.database.close()
 
-    def ingest_test_file(self, filename):
-        '''Simply feeds in the response for an ingest test'''
-        file_contents = ""
-        with open(filename, 'r') as scanfile:
-            file_contents = scanfile.read()
-
-        ingest_daemon = ndr_server.IngestServer(self._nsc)
-
-        ingest_daemon.process_ingest_message(self._db_connection, self._recorder, file_contents)
-
     def test_recorder_version_update(self):
         '''Tests loading of a status message and making sure the version information updates'''
 
-        self.ingest_test_file(STATUS_MSG)
+        tests.util.ingest_test_file(self, STATUS_MSG)
 
         recorder = ndr_server.Recorder.read_by_id(self._nsc,
                                                   self._recorder.pg_id,

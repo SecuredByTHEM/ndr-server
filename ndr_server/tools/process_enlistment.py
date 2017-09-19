@@ -74,17 +74,22 @@ def main():
             x509.NameOID.PSEUDONYM)[0].value
 
         # Try to get the organization. If failure, it doesn't exist
+        db_connection = nsc.database.get_connection()
+
         try:
-            organization = ndr_server.Organization.read_by_name(nsc, orgnaization_name)
-        except psycopg2.Error:
+            organization = ndr_server.Organization.read_by_name(nsc, orgnaization_name, db_connection)
+        except psycopg2.InternalError:
             organization = None
 
         site = None
         if organization is not None:
             try:
-                site = ndr_server.Site.read_by_name(nsc, ou_name)
-            except psycopg2.Error:
+                site = ndr_server.Site.read_by_name(nsc, ou_name, db_connection)
+            except psycopg2.InternalError:
                 site = None
+
+        db_connection.rollback()
+        db_connection.close()
 
         print("Recorder Enlistment Request")
         print("Organization: ", orgnaization_name)
@@ -117,6 +122,9 @@ def main():
 
         local_install = False
 
+        # Start a transaction and create the organization and site if needed
+        db_connection = nsc.database.get_connection()
+
         if common_name == nsc.hostname:
             local = input("Certificate CN matches local hostname. Install certificates locally for server [Y/n]?")
             if not local or local.lower()[0] != 'n':
@@ -127,13 +135,9 @@ def main():
                     return
                 local_install = True
 
-        # Start a transaction and create the organization and site if needed
-        db_connection = nsc.database.get_connection()
-        cursor = db_connection.cursor()
-
         if local_install is False:
             if organization is None:
-                print("Creating organization", orgnaization_name)    
+                print("Creating organization", orgnaization_name)
                 organization = ndr_server.Organization.create(nsc, orgnaization_name, db_connection)
 
             if site is None:

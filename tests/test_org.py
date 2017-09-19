@@ -61,6 +61,13 @@ class TestOrganizations(unittest.TestCase):
                           db_conn=db2)
         db2.close()
 
+        db2 = self._nsc.database.get_connection()
+        self.assertRaises(psycopg2.InternalError,
+                          ndr_server.Organization.read_by_name, self._nsc, "Test 123",
+                          db_conn=db2)
+        db2.close()
+
+
     def test_contact_retrieval(self):
         '''Retrieves all the contacts for a given organization'''
 

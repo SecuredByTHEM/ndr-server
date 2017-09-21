@@ -26,7 +26,7 @@ import ndr_server
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_CONFIG = THIS_DIR + "/test_config.yml"
-STATUS_MSG= THIS_DIR + "/data/ingest/status.yml"
+STATUS_MSG = THIS_DIR + "/data/ingest/status.yml"
 
 class TestIngests(unittest.TestCase):
     '''Tests various ingest cases'''

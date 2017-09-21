@@ -62,13 +62,26 @@ if ($src_ip_type eq 'PRIVATE' && $dst_ip_type eq 'PUBLIC') {
     return;
 }
 
-elog(INFO, "Global IP: ".$global_ip);
-elog(INFO, "Local IP: ".$local_ip);
+#elog(INFO, "Global IP: ".$global_ip);
+#elog(INFO, "Local IP: ".$local_ip);
 
-my $geodb = Geo::IP2Location->open("/home/mcasadevall/tmp/IP-COUNTRY-REGION-CITY-ISP-DOMAIN-SAMPLE.BIN");
+# Load the correct GeoIP database depending on if this a v4 or v6 operation
+my $geodb;
+my $geodb_version;
+
+# HACK - this paths shouldn't be hardcoded
+
+if ($src_ip->version() == '4') {
+    $geodb = Geo::IP2Location->open("/etc/ndr/ip2location/DB7_v4.bin");
+    $geodb_version = $geodb->get_database_version();
+} elsif ($src_ip->version() == '6') {
+    $geodb = Geo::IP2Location->open("/etc/ndr/ip2location/DB7_v6.bin");
+    $geodb_version = $geodb->get_database_version();
+} else {
+    elog(ERROR, "Received impossible IP version");
+}
 
 # Get the GeoIP information from the database
-my $geodb_version = $geodb->get_database_version();
 
 # If we get an unknown response from Geo::IP2Location, replace it with a NULL entry
 sub replace_unknown_with_null {
@@ -103,13 +116,13 @@ unless ($geodb->get_region($global_ip) =~ "You can evaluate IP address from") {
     $isp = replace_unknown_with_null($geodb->get_isp($global_ip));
     $domain = replace_unknown_with_null($geodb->get_domain($global_ip));
 
-    elog(INFO, "DB Version ".$geodb_version);
-    elog(INFO, "Country Short: $countryshort");
-    elog(INFO, "Country Long: $countrylong");
-    elog(INFO, "Region: $region");
-    elog(INFO, "City: $city");
-    elog(INFO, "ISP: $isp");
-    elog(INFO, "Domain: $domain");
+    #elog(INFO, "DB Version ".$geodb_version);
+    #elog(INFO, "Country Short: $countryshort");
+    #elog(INFO, "Country Long: $countrylong");
+    #elog(INFO, "Region: $region");
+    #elog(INFO, "City: $city");
+    #elog(INFO, "ISP: $isp");
+    #elog(INFO, "Domain: $domain");
 } else {
     elog(WARNING, "Out of range for demo database.");
 }

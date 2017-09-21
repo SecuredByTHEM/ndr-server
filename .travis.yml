@@ -24,6 +24,22 @@ before_script:
   - sudo make install
   - popd
 
+  # Install IP2Location databases to the correct location
+  - mkdir sample1
+  - pushd sample1
+  - wget https://www.ip2location.com/downloads/sample.bin.db7.zip
+  - unzip sample.bin.db7.zip
+  - sudo mkdir -p /etc/ndr/ip2location
+  - sudo cp IP-COUNTRY-REGION-CITY-ISP-DOMAIN-SAMPLE.BIN /etc/ndr/ip2location/DB7_v4.bin
+  - popd
+
+  - mkdir sample2
+  - pushd sample2
+  - wget https://www.ip2location.com/downloads/sample6.bin.db7.zip
+  - unzip sample6.bin.db7.zip
+  - sudo cp IPV6-COUNTRY-REGION-CITY-ISP-DOMAIN.SAMPLE.BIN /etc/ndr/ip2location/DB7_v6.bin
+  - popd
+
   # Grab flyway and initial the database
   - wget https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/4.2.0/flyway-commandline-4.2.0-linux-x64.tar.gz
   - tar zxvf flyway-commandline-4.2.0-linux-x64.tar.gz

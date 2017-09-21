@@ -1,6 +1,7 @@
-CREATE OR REPLACE FUNCTION traffic_report.report_traffic_breakdown_in_site_by_machine(_site_id bigint, _start_timestamp timestamp, _end_timestamp timestamp)
+-- Returns a statistical breakdown of traffic per site
+
+CREATE OR REPLACE FUNCTION traffic_report.report_geoip_breakdown_for_site(_site_id bigint, _start_timestamp timestamp, _end_timestamp timestamp)
     RETURNS TABLE (
-        local_ip inet,
         country_name text,
         region_name text,
         rx_total_bytes bigint,
@@ -10,14 +11,13 @@ CREATE OR REPLACE FUNCTION traffic_report.report_traffic_breakdown_in_site_by_ma
     AS $$
 BEGIN
 
-RETURN QUERY SELECT DISTINCT ON (local_ip, country_name, region_name)
-	report.local_ip,
+RETURN QUERY SELECT DISTINCT ON (country_name, region_name)
 	report.country_name,
 	report.region_name,
 	SUM(report.rx_total_bytes)::bigint AS rx_total_bytes,
 	SUM(report.tx_total_bytes)::bigint AS tx_total_bytes
 FROM traffic_report.report_traffic_breakdown_for_site(_site_id, _start_timestamp, _end_timestamp) AS report
-GROUP BY (report.local_ip, report.country_name, report.region_name);
+GROUP BY (report.country_name, report.region_name);
 
 END;
 $$;

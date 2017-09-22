@@ -174,12 +174,12 @@ $alert
             time=self.time_str
         )
 
-class TrafficReportMessage(BaseTemplate):
-    '''Traffic Reporting Emails'''
+class SnortTrafficReportMessage(BaseTemplate):
+    '''Snort Traffic Reporting Emails'''
     def __init__(self, organization, site, traffic_report):
         BaseTemplate.__init__(self, organization, site, None, None)
         self.traffic_report = traffic_report
-        self.subject_text = "Daily Traffic Report For Site $site_name"
+        self.subject_text = "Daily SNORT Traffic Report For Site $site_name"
         self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours. GeoIP data is provided by GeoLite2 data available from MaxMind.
 
 Traffic Breakdown By Country

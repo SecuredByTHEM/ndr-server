@@ -32,42 +32,31 @@ TRAFFIC_REPORT_LOG = THIS_DIR + "/data/ingest/traffic_report.yml"
 class TestIngests(unittest.TestCase):
     '''Tests various ingest cases'''
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         logging.getLogger().addHandler(logging.NullHandler())
         # Now load a global config object so the DB connection is open
-        cls._nsc = ndr_server.Config(logging.getLogger(), TEST_CONFIG)
+        self._nsc = ndr_server.Config(logging.getLogger(), TEST_CONFIG)
 
         # We need to process test messages, so override the base directory for
         # this test
-        cls._db_connection = cls._nsc.database.get_connection()
+        self._db_connection = self._nsc.database.get_connection()
 
         # For this specific test, we need to create a few test objects
-        cls._test_org = ndr_server.Organization.create(
-            cls._nsc, "Ingest Recorders Org", db_conn=cls._db_connection)
-        cls._test_site = ndr_server.Site.create(
-            cls._nsc, cls._test_org, "Ingest Recorders Site", db_conn=cls._db_connection)
-        cls._recorder = ndr_server.Recorder.create(
-            cls._nsc, cls._test_site, "Test Recorder", "ndr_test_status",
-            db_conn=cls._db_connection)
+        self._test_org = ndr_server.Organization.create(
+            self._nsc, "Ingest Recorders Org", db_conn=self._db_connection)
+        self._test_site = ndr_server.Site.create(
+            self._nsc, self._test_org, "Ingest Recorders Site", db_conn=self._db_connection)
+        self._recorder = ndr_server.Recorder.create(
+            self._nsc, self._test_site, "Test Recorder", "ndr_test_status",
+            db_conn=self._db_connection)
 
-        # We need to ingest a traffic report message so it can be used by all following stuff
-        cls._ingested_test_data = False
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._db_connection.rollback()
-        cls._nsc.database.close()
-
-    def ingest_traffic_report(self):
-        '''Hack around the fact that trying to ingest a file in the setUpClass method causes a deadlock'''
-        if self._ingested_test_data is False:
-            tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
-            self._ingested_test_data = True
+    def tearDown(self):
+        self._db_connection.rollback()
+        self._nsc.database.close()
 
     def test_geoip_reporting(self):
         '''Tests loading of a status message and making sure the version information updates'''
-        self.ingest_traffic_report()
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
 
         report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
                                                                self._test_site,
@@ -79,12 +68,24 @@ class TestIngests(unittest.TestCase):
 
     def test_machine_breakdown_reporting(self):
         '''Tests loading of a status message and making sure the version information updates'''
-        self.ingest_traffic_report()
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
 
         report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
                                                                self._test_site,
                                                                self._db_connection)
         report_manager.retrieve_geoip_by_local_ip_breakdown(
+            datetime.now() - timedelta(days=1),
+            datetime.now(),
+            self._db_connection)
+
+    def test_full_host_breakdown(self):
+        '''Tests loading of a status message and making sure the version information updates'''
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
+
+        report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
+                                                               self._test_site,
+                                                               self._db_connection)
+        report_manager.retrieve_full_host_breakdown(
             datetime.now() - timedelta(days=1),
             datetime.now(),
             self._db_connection)

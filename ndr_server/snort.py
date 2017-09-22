@@ -279,7 +279,7 @@ class SnortTrafficReport(object):
     def generate_report_emails(self, send=True, db_conn=None):
         '''Generates a report email breaking down traffic by country destination'''
 
-        tr_email = ndr_server.TrafficReportMessage(self.organization, self.site, self)
+        tr_email = ndr_server.SnortTrafficReportMessage(self.organization, self.site, self)
 
         if send is True:
             alert_contacts = self.organization.get_contacts(db_conn=db_conn)

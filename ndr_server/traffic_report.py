@@ -113,8 +113,22 @@ class TsharkTrafficReportManager(object):
         import pprint
         pprint.pprint(local_ip_cursor.fetchall())
 
-    def retrieve_remote_host_breakdown(self):
+    def retrieve_full_host_breakdown(self,
+                                     start_period: datetime.datetime,
+                                     end_period: datetime.datetime,
+                                     db_conn):
+
         '''Breaks down remote traffic by machine and remote host destination'''
+
+        traffic_breakdown = self.config.database.run_procedure(
+            "traffic_report.report_traffic_breakdown_for_site",
+            [self.site.pg_id,
+             start_period,
+             end_period],
+            existing_db_conn=db_conn)
+
+        import pprint
+        pprint.pprint(traffic_breakdown.fetchall())
 
     def generate_report_emails(self, send=True, db_conn=None):
         '''Generates a report email breaking down traffic by country destination'''

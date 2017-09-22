@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION traffic_report.report_traffic_breakdown_in_site_by_ma
     AS $$
 BEGIN
 
-RETURN QUERY SELECT DISTINCT ON (local_ip, country_name, region_name)
+RETURN QUERY SELECT
 	report.local_ip,
 	report.country_name,
 	report.region_name,

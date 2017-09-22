@@ -53,8 +53,11 @@ CREATE TABLE traffic_report.network_outbound_traffic (
     msg_id bigint NOT NULL REFERENCES public.recorder_messages(id),
     traffic_report_id bigint NOT NULL REFERENCES traffic_report.traffic_reports(id),
     local_ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
-    global_ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id),
-    geoip_database_version text NOT NULL,
+    global_ip_id bigint NOT NULL REFERENCES network_scan.ip_addresses(id)
+);
+
+CREATE TABLE traffic_report.geoip_information (
+    id bigserial NOT NULL PRIMARY KEY,
     country_code char(2),
     country_name text,
     region_name text,
@@ -63,5 +66,15 @@ CREATE TABLE traffic_report.network_outbound_traffic (
     domain text
 );
 
-CREATE INDEX ON traffic_report.network_outbound_traffic(country_name);
-CREATE INDEX ON traffic_report.network_outbound_traffic(region_name);
+CREATE INDEX ON traffic_report.geoip_information(country_code);
+CREATE INDEX ON traffic_report.geoip_information(country_name);
+CREATE INDEX ON traffic_report.geoip_information(region_name);
+CREATE INDEX ON traffic_report.geoip_information(city_name);
+CREATE INDEX ON traffic_report.geoip_information(isp);
+CREATE INDEX ON traffic_report.geoip_information(domain);
+
+CREATE TABLE traffic_report.network_outbound_traffic_geoip_info (
+    id bigserial NOT NULL PRIMARY KEY,
+    network_outbound_traffic_id bigint NOT NULL REFERENCES traffic_report.network_outbound_traffic(id),
+    geoip_information_id bigint NOT NULL REFERENCES traffic_report.geoip_information(id)
+);

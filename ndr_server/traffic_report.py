@@ -17,7 +17,7 @@
 '''Classes relating to management of data coming from SNORT'''
 
 import ipaddress
-import geoip2.database
+import datetime
 
 import ndr
 import ndr_server
@@ -69,42 +69,53 @@ class TsharkTrafficReport(object):
 class TsharkTrafficReportManager(object):
     '''Handles a summary of traffic report messages from the database'''
 
-    def __init__(self, config):
+    def __init__(self, config, site, db_conn):
         self.config = config
-        self.organization = None
-        self.site = None
-        self.traffic_dicts = None
-        self.statistics_dicts = {}
-        self.total_rxpackets = 0
-        self.total_txpackets = 0
+        self.site = site
+        self.organization = site.get_organization(db_conn)
 
-    @classmethod
-    def pull_report_for_time_interval(cls, config, site, seconds_since, db_conn=None):
+    def retrieve_all_reports(self,
+                             start_period: datetime.datetime,
+                             end_period: datetime.datetime,
+                             db_conn):
+
         '''Pulls the report based on time from the database'''
 
-    def process_dicts(self):
-        '''Goes through the traffic report, and deletes local network traffic'''
+    def retrieve_geoip_breakdown(self,
+                                 start_period: datetime.datetime,
+                                 end_period: datetime.datetime,
+                                 db_conn):
+        '''Breaks down all traffic by destination country'''
 
+        geoip_cursor = self.config.database.run_procedure(
+            "traffic_report.report_geoip_breakdown_for_site",
+            [self.site.pg_id,
+             start_period,
+             end_period],
+            existing_db_conn=db_conn)
 
-    def breakdown_traffic_by_internal_ip(self):
+        import pprint
+        pprint.pprint(geoip_cursor.fetchall())
+
+    def retrieve_geoip_by_local_ip_breakdown(self,
+                                             start_period: datetime.datetime,
+                                             end_period: datetime.datetime,
+                                             db_conn):
         '''Breaks down traffic by machine and destination'''
 
-    def generate_statistics(self):
-        '''Works out the number of unique destinations, the total packet counts, and breakdown
-        of percentages'''
+        local_ip_cursor = self.config.database.run_procedure(
+            "traffic_report.report_traffic_breakdown_in_site_by_machine",
+            [self.site.pg_id,
+             start_period,
+             end_period],
+            existing_db_conn=db_conn)
 
+        import pprint
+        pprint.pprint(local_ip_cursor.fetchall())
+
+    def retrieve_remote_host_breakdown(self):
+        '''Breaks down remote traffic by machine and remote host destination'''
 
     def generate_report_emails(self, send=True, db_conn=None):
         '''Generates a report email breaking down traffic by country destination'''
 
-        tr_email = ndr_server.TrafficReportMessage(self.organization, self.site, self)
-
-        if send is True:
-            alert_contacts = self.organization.get_contacts(db_conn=db_conn)
-
-            for contact in alert_contacts:
-                contact.send_message(
-                    tr_email.subject(), tr_email.prepped_message()
-                )
-
-        return tr_email

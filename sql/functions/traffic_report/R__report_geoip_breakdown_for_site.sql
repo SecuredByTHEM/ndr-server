@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION traffic_report.report_geoip_breakdown_for_site(_site_
     AS $$
 BEGIN
 
-RETURN QUERY SELECT DISTINCT ON (country_name, region_name)
+RETURN QUERY SELECT
 	report.country_name,
 	report.region_name,
 	SUM(report.rx_total_bytes)::bigint AS rx_total_bytes,

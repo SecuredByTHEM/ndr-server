@@ -134,50 +134,62 @@ if (defined $global_hostname_id) {
     spi_exec_prepared($register_sp, $_[0], $global_ip_id, $global_hostname_id);
 }
 
+my $geoip_proc = 'SELECT * FROM traffic_report.get_or_create_geoip_info_set($1, $2, $3, $4, $5, $6)';
+my $geoip_sp = spi_prepare($geoip_proc, 'text', 'text', 'text', 'text', 'text', 'text');
+my $geoip_sth = spi_query_prepared($geoip_sp, 
+                                   $countryshort,
+                                   $countrylong,
+                                   $region,
+                                   $city,
+                                   $isp,
+                                   $domain);
+my $geoip_row = spi_fetchrow($geoip_sth);
+
+spi_cursor_close($geoip_sth);
+
 # Unlike PLPgSQL, inserting safely a bit more effort. We need to create an insert query plan, then
 # character replace. It would be NICE if the standard DBI interface was available but what can you
 # do?
 
+# First the NOT goes in, then we link it to geoIP table
 my $network_outbound_traffic_insert = <<'EOF';
-INSERT INTO traffic_report.network_outbound_traffic 
+INSERT INTO traffic_report.network_outbound_traffic
     (traffic_report_id,
      msg_id,
      local_ip_id,
-     global_ip_id,
-     geoip_database_version,
-     country_code,
-     country_name,
-     region_name,
-     city_name,
-     isp,
-     domain)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     global_ip_id)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id
 EOF
 
 my $noi_insert_plan = spi_prepare($network_outbound_traffic_insert,
                                   'bigint',
                                   'bigint',
                                   'bigint',
-                                  'bigint',
-                                  'text',
-                                  'text',
-                                  'text',
-                                  'text',
-                                  'text',
-                                  'text',
-                                  'text');
+                                  'bigint');
 
-spi_exec_prepared($noi_insert_plan,
-                  $tr_row->{'id'},
-                  $tr_row->{'msg_id'},
-                  $local_ip_id,
-                  $global_ip_id,
-                  $geodb_version,
-                  $countryshort,
-                  $countrylong,
-                  $region,
-                  $city,
-                  $isp,
-                  $domain);
+my $not_sth = spi_query_prepared($noi_insert_plan,
+                                 $tr_row->{'id'},
+                                 $tr_row->{'msg_id'},
+                                 $local_ip_id,
+                                 $global_ip_id);
+my $not_row = spi_fetchrow($not_sth);
+spi_cursor_close($not_sth);
+
+# Now link the geoip information
+my $not_to_geoip_proc = <<'EOF';
+INSERT INTO traffic_report.network_outbound_traffic_geoip_info
+    (network_outbound_traffic_id,
+     geoip_information_id)
+     VALUES ($1, $2)
+EOF
+
+my $not_to_geoip_proc_plan = spi_prepare($not_to_geoip_proc,
+                                         'bigint',
+                                         'bigint');
+# Perl's variable naming here HURTs
+spi_exec_prepared($not_to_geoip_proc_plan,
+                  $not_row->{'id'},
+                  $geoip_row->{'get_or_create_geoip_info_set'});
 
 $$

@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-'''Classes relating to management of data coming from SNORT'''
+'''Classes relating to management of data coming from TCPDump/tshark'''
 
 import ipaddress
 import datetime
+import collections
 
 import ndr
 import ndr_server
@@ -66,6 +67,17 @@ class TsharkTrafficReport(object):
 
         return traffic_log
 
+GeoipSummaryRecord = collections.namedtuple('GeoipSummaryRecord', 
+                                            'country_name region_name \
+                                            total_rx_bytes total_tx_bytes')
+MachineGeoIpRecord = collections.namedtuple('MachineGeoIpRecord',
+                                            'local_ip country_name region_name \
+                                            total_rx_bytes total_tx_bytes')
+FullConnectionGeoIpRecord = collections.namedtuple('FullConnectionGeoIpRecord',
+                                                   'local_ip global_ip country_name region_name \
+                                                   city_name isp domain \
+                                                   total_rx_bytes total_tx_bytes')
+
 class TsharkTrafficReportManager(object):
     '''Handles a summary of traffic report messages from the database'''
 
@@ -74,28 +86,31 @@ class TsharkTrafficReportManager(object):
         self.site = site
         self.organization = site.get_organization(db_conn)
 
-    def retrieve_all_reports(self,
-                             start_period: datetime.datetime,
-                             end_period: datetime.datetime,
-                             db_conn):
-
-        '''Pulls the report based on time from the database'''
-
     def retrieve_geoip_breakdown(self,
                                  start_period: datetime.datetime,
                                  end_period: datetime.datetime,
                                  db_conn):
         '''Breaks down all traffic by destination country'''
 
-        geoip_cursor = self.config.database.run_procedure(
+        geoip_results = self.config.database.run_procedure_fetchall(
             "traffic_report.report_geoip_breakdown_for_site",
             [self.site.pg_id,
              start_period,
              end_period],
             existing_db_conn=db_conn)
 
-        import pprint
-        pprint.pprint(geoip_cursor.fetchall())
+        geoip_records = []
+        for record in geoip_results:
+            geoip_records.append(
+                GeoipSummaryRecord(
+                    country_name=record['country_name'],
+                    region_name=record['region_name'],
+                    total_rx_bytes=record['total_rx_bytes'],
+                    total_tx_bytes=record['total_tx_bytes']
+                )
+            )
+
+        return geoip_records
 
     def retrieve_geoip_by_local_ip_breakdown(self,
                                              start_period: datetime.datetime,
@@ -103,15 +118,26 @@ class TsharkTrafficReportManager(object):
                                              db_conn):
         '''Breaks down traffic by machine and destination'''
 
-        local_ip_cursor = self.config.database.run_procedure(
+        local_ip_results = self.config.database.run_procedure_fetchall(
             "traffic_report.report_traffic_breakdown_in_site_by_machine",
             [self.site.pg_id,
              start_period,
              end_period],
             existing_db_conn=db_conn)
 
-        import pprint
-        pprint.pprint(local_ip_cursor.fetchall())
+        local_ip_records = []
+        for record in local_ip_results:
+            local_ip_records.append(
+                MachineGeoIpRecord(
+                    local_ip=ipaddress.ip_address(record['local_ip']),
+                    country_name=record['country_name'],
+                    region_name=record['region_name'],
+                    total_rx_bytes=record['total_rx_bytes'],
+                    total_tx_bytes=record['total_tx_bytes']
+                )
+            )
+
+        return local_ip_records
 
     def retrieve_full_host_breakdown(self,
                                      start_period: datetime.datetime,
@@ -120,15 +146,31 @@ class TsharkTrafficReportManager(object):
 
         '''Breaks down remote traffic by machine and remote host destination'''
 
-        traffic_breakdown = self.config.database.run_procedure(
+        traffic_breakdown_results = self.config.database.run_procedure_fetchall(
             "traffic_report.report_traffic_breakdown_for_site",
             [self.site.pg_id,
              start_period,
              end_period],
             existing_db_conn=db_conn)
 
-        import pprint
-        pprint.pprint(traffic_breakdown.fetchall())
+        traffic_breakdown_records = []
+        for record in traffic_breakdown_records:
+            traffic_breakdown_results.append(
+                FullConnectionGeoIpRecord(
+                    local_ip=ipaddress.ip_address(record['local_ip']),
+                    global_ip=ipaddress.ip_address(record['global_ip']),
+                    country_name=record['country_name'],
+                    region_name=record['region_name'],
+                    city_name=record['city_name'],
+                    isp=record['isp'],
+                    domain=record['domain'],
+                    total_rx_bytes=record['total_rx_bytes'],
+                    total_tx_bytes=record['total_tx_bytes']
+                )
+            )
+
+        return traffic_breakdown_records
+
 
     def generate_report_emails(self, send=True, db_conn=None):
         '''Generates a report email breaking down traffic by country destination'''

@@ -4,8 +4,8 @@ CREATE OR REPLACE FUNCTION traffic_report.report_geoip_breakdown_for_site(_site_
     RETURNS TABLE (
         country_name text,
         region_name text,
-        rx_total_bytes bigint,
-        tx_total_bytes bigint
+        total_rx_bytes bigint,
+        total_tx_bytes bigint
     )
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$

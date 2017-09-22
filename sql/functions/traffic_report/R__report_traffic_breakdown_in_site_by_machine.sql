@@ -3,8 +3,8 @@ CREATE OR REPLACE FUNCTION traffic_report.report_traffic_breakdown_in_site_by_ma
         local_ip inet,
         country_name text,
         region_name text,
-        rx_total_bytes bigint,
-        tx_total_bytes bigint
+        total_rx_bytes bigint,
+        total_tx_bytes bigint
     )
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$

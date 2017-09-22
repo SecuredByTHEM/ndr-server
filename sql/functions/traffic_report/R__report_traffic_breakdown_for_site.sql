@@ -7,8 +7,8 @@ CREATE OR REPLACE FUNCTION traffic_report.report_traffic_breakdown_for_site(_sit
         city_name text,
         isp text,
         domain text,
-        rx_total_bytes bigint,
-        tx_total_bytes bigint
+        total_rx_bytes bigint,
+        total_tx_bytes bigint
     )
     LANGUAGE plpgsql SECURITY DEFINER
     AS $$

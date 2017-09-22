@@ -55,37 +55,45 @@ class TestIngests(unittest.TestCase):
         self._nsc.database.close()
 
     def test_geoip_reporting(self):
-        '''Tests loading of a status message and making sure the version information updates'''
+        '''Tests GeoIP reporting information'''
         tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
 
         report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
                                                                self._test_site,
                                                                self._db_connection)
-        report_manager.retrieve_geoip_breakdown(
+        geoip_report = report_manager.retrieve_geoip_breakdown(
             datetime.now() - timedelta(days=1),
             datetime.now(),
             self._db_connection)
+        import pprint
+        pprint.pprint(geoip_report)
 
     def test_machine_breakdown_reporting(self):
-        '''Tests loading of a status message and making sure the version information updates'''
+        '''Tests breaking down data by machine'''
         tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
 
         report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
                                                                self._test_site,
                                                                self._db_connection)
-        report_manager.retrieve_geoip_by_local_ip_breakdown(
+        local_ip_report = report_manager.retrieve_geoip_by_local_ip_breakdown(
             datetime.now() - timedelta(days=1),
             datetime.now(),
             self._db_connection)
+
+        import pprint
+        pprint.pprint(local_ip_report)
 
     def test_full_host_breakdown(self):
-        '''Tests loading of a status message and making sure the version information updates'''
+        '''Tests full host breakdown'''
         tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
 
         report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
                                                                self._test_site,
                                                                self._db_connection)
-        report_manager.retrieve_full_host_breakdown(
+        full_breakdown_report = report_manager.retrieve_full_host_breakdown(
             datetime.now() - timedelta(days=1),
             datetime.now(),
             self._db_connection)
+
+        import pprint
+        pprint.pprint(full_breakdown_report)

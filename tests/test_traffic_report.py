@@ -107,6 +107,21 @@ class TestIngests(unittest.TestCase):
 
         self.assertEqual(len(full_breakdown_report), 74)
 
+    def test_full_host_breakdown(self):
+        '''Tests internet host breakdown'''
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
+
+        report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
+                                                               self._test_site,
+                                                               self._db_connection)
+        internet_host_breakdown = report_manager.retrieve_internet_host_breakdown(
+            datetime.now() - timedelta(days=1),
+            datetime.now(),
+            self._db_connection)
+
+        import pprint
+        pprint.pprint(internet_host_breakdown)
+
     def test_email_report(self):
         '''Tests generation of email reports and such'''
         tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
@@ -122,6 +137,5 @@ class TestIngests(unittest.TestCase):
 
         with open(self._test_contact, 'r') as f:
             alert_email = f.read()
-            print(alert_email)
 
         self.assertIn("This is a snapshot of internet traffic broken down by destination IP", alert_email)

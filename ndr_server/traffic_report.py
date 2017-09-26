@@ -20,6 +20,8 @@ import ipaddress
 import datetime
 import collections
 
+from terminaltables import AsciiTable
+
 import ndr
 import ndr_server
 
@@ -77,6 +79,8 @@ FullConnectionGeoIpRecord = collections.namedtuple('FullConnectionGeoIpRecord',
                                                    'local_ip global_ip country_name region_name \
                                                    city_name isp domain \
                                                    total_rx_bytes total_tx_bytes')
+InternetHostRecord = collections.namedtuple('InternetHostRecord',
+                                            'local_ip global_ip global_hostname isp')
 
 class TsharkTrafficReportManager(object):
     '''Handles a summary of traffic report messages from the database'''
@@ -139,6 +143,32 @@ class TsharkTrafficReportManager(object):
 
         return local_ip_records
 
+    def retrieve_internet_host_breakdown(self,
+                                         start_period: datetime.datetime,
+                                         end_period: datetime.datetime,
+                                         db_conn):
+        '''Breaks down traffic by machine and destination'''
+
+        internet_host_results = self.config.database.run_procedure_fetchall(
+            "traffic_report.report_internet_host_breakdown_for_site",
+            [self.site.pg_id,
+             start_period,
+             end_period],
+            existing_db_conn=db_conn)
+
+        internet_host_records = []
+        for record in internet_host_results:
+            internet_host_records.append(
+                InternetHostRecord(
+                    local_ip=ipaddress.ip_address(record['local_ip']),
+                    global_ip=ipaddress.ip_address(record['global_ip']),
+                    global_hostname=record['global_hostname'],
+                    isp=record['isp']
+                )
+            )
+
+        return internet_host_records
+
     def retrieve_full_host_breakdown(self,
                                      start_period: datetime.datetime,
                                      end_period: datetime.datetime,
@@ -195,3 +225,124 @@ class TsharkTrafficReportManager(object):
                 )
 
         return tr_email
+
+    @staticmethod
+    def generate_table_of_geoip_breakdown(traffic_report):
+                # We'll sort on transmitted data
+        table_data = [
+            ['Country', 'Region', 'RX Bytes', 'TX Bytes', '% Rx', '% Tx']
+        ]
+
+        # Group the results together
+        sorted_trs = {}
+        unknown_entry = None
+        total_tx = 0
+        total_rx = 0
+
+        # Sort it into country and regions
+        for report in traffic_report:
+            if report.country_name not in sorted_trs:
+                sorted_trs[report.country_name] = []
+
+            country_dict = sorted_trs[report.country_name]
+            country_dict.append(report)
+            total_tx += report.total_tx_bytes
+            total_rx += report.total_rx_bytes
+
+        tx_entry_dict = {}
+
+        # Now generate the report
+        for country in sorted_trs.keys():
+            table_entry = []
+            country_tx = 0
+            country_rx = 0
+
+            # Add up all the entries in the country
+            for report in sorted_trs[country]:
+                country_tx += report.total_tx_bytes
+                country_rx += report.total_rx_bytes
+
+            # Calculate the precents
+            try:
+                rx_percentage = (
+                    "{0:.2f}".format((country_rx / total_rx) * 100)
+                )
+            except ZeroDivisionError:
+                rx_percentage = "{0:.2f}".format(0)
+
+            try:
+                tx_percentage = (
+                    "{0:.2f}".format((country_tx / total_tx) * 100)
+                )
+            except ZeroDivisionError:
+                tx_percentage = "{0:.2f}".format(0)
+
+
+            # If there's only one entry, merge them to one line
+
+            region_field = ""
+            if len(sorted_trs[country]) == 1:
+                region_field = sorted_trs[country][0].region_name
+
+
+            # Special Handling for the Unknown field
+            if country == "Unknown":
+                unknown_entry = [[
+                    country,
+                    "",
+                    country_rx,
+                    country_tx,
+                    rx_percentage,
+                    tx_percentage
+                ]]
+                continue
+
+            # And now build the table
+            table_entry.append([
+                country,
+                region_field,
+                country_rx,
+                country_tx,
+                rx_percentage,
+                tx_percentage
+            ])
+
+            # Calculate the precentage of the total
+            if len(sorted_trs[country]) != 1:
+                for report in sorted_trs[country]:
+                    table_entry.append([
+                        "",
+                        report.region_name,
+                        report.total_rx_bytes,
+                        report.total_tx_bytes,
+                        "",
+                        ""
+                    ])
+
+            # This can happen if we get two stat dicts with the same percentage
+            if tx_percentage in tx_entry_dict:
+                tx_entry_dict[tx_percentage] += table_entry
+            else:
+                tx_entry_dict[tx_percentage] = table_entry
+
+        for key in sorted(tx_entry_dict.keys(), reverse=True):
+            table_data += tx_entry_dict[key]
+
+        # Append the Unknown entry at the end if it exists
+        if unknown_entry is not None:
+            table_data += unknown_entry
+
+        # And now the total
+        table_data.append([])
+        table_data.append([
+            "Total",
+            "",
+            total_rx,
+            total_rx,
+            float(100),
+            float(100)
+        ])
+
+        # Now generate a pretty table and return it
+        table = AsciiTable(table_data)
+        return table.table

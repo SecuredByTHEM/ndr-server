@@ -26,7 +26,8 @@ from ndr_server.templates import (
     TestAlertTemplate,
     UnknownMachineTemplate,
     RecorderAlertMessage,
-    SnortTrafficReportMessage
+    SnortTrafficReportMessage,
+    TsharkTrafficReportMessage
 )
 from ndr_server.snort import (
     SnortTrafficLog,

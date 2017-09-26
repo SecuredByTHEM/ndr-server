@@ -257,3 +257,159 @@ $country_breakdown'''
             site_name=self.site.name,
             country_breakdown=self.generate_country_breakdown()
         )
+
+class TsharkTrafficReportMessage(BaseTemplate):
+    '''Snort Traffic Reporting Emails'''
+    def __init__(self,
+                 organization,
+                 site,
+                 traffic_report,
+                 start_period: datetime.datetime,
+                 end_period: datetime.datetime,
+                 db_conn):
+        BaseTemplate.__init__(self, organization, site, None, None)
+        self.traffic_report = traffic_report
+        self.start_period = start_period
+        self.end_period = end_period
+        self.db_conn = db_conn
+        self.subject_text = "Daily Traffic Report (v2) For Site $site_name"
+        self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours.
+
+Traffic Breakdown By Country
+===
+$country_breakdown'''
+
+    def generate_country_breakdown(self):
+        '''Generates a breakdown of the traffic'''
+
+        # We'll sort on transmitted data
+        table_data = [
+            ['Country', 'Region', 'RX Bytes', 'TX Bytes', '% Rx', '% Tx']
+        ]
+
+        # Grab the general geoip summary and do some preprocessing on it
+        traffic_report = self.traffic_report.retrieve_geoip_breakdown(self.start_period,
+                                                                      self.end_period,
+                                                                      self.db_conn)
+        # Group the results together
+        sorted_trs = {}
+        unknown_entry = None
+        total_tx = 0
+        total_rx = 0
+
+        # Sort it into country and regions
+        for report in traffic_report:
+            if report.country_name not in sorted_trs:
+                sorted_trs[report.country_name] = []
+
+            country_dict = sorted_trs[report.country_name]
+            country_dict.append(report)
+            total_tx += report.total_tx_bytes
+            total_rx += report.total_rx_bytes
+
+        tx_entry_dict = {}
+
+        # Now generate the report
+        for country in sorted_trs.keys():
+            table_entry = []
+            country_tx = 0
+            country_rx = 0
+
+            # Add up all the entries in the country
+            for report in sorted_trs[country]:
+                country_tx += report.total_tx_bytes
+                country_rx += report.total_rx_bytes
+
+            # Calculate the precents
+            try:
+                rx_percentage = (
+                    "{0:.2f}".format((country_rx / total_rx) * 100)
+                )
+            except ZeroDivisionError:
+                rx_percentage = "{0:.2f}".format(0)
+
+            try:
+                tx_percentage = (
+                    "{0:.2f}".format((country_tx / total_tx) * 100)
+                )
+            except ZeroDivisionError:
+                tx_percentage = "{0:.2f}".format(0)
+
+
+            # If there's only one entry, merge them to one line
+
+            region_field = ""
+            if len(sorted_trs[country]) == 1:
+                region_field = sorted_trs[country][0].region_name
+
+
+            # Special Handling for the Unknown field
+            if country == "Unknown":
+                unknown_entry = [[
+                    country,
+                    "",
+                    country_rx,
+                    country_tx,
+                    rx_percentage,
+                    tx_percentage
+                ]]
+                continue
+
+            # And now build the table
+            table_entry.append([
+                country,
+                region_field,
+                country_rx,
+                country_tx,
+                rx_percentage,
+                tx_percentage
+            ])
+
+            # Calculate the precentage of the total
+            if len(sorted_trs[country]) != 1:
+                for report in sorted_trs[country]:
+                    table_entry.append([
+                        "",
+                        report.region_name,
+                        report.total_rx_bytes,
+                        report.total_tx_bytes,
+                        "",
+                        ""
+                    ])
+
+            # This can happen if we get two stat dicts with the same percentage
+            if tx_percentage in tx_entry_dict:
+                tx_entry_dict[tx_percentage] += table_entry
+            else:
+                tx_entry_dict[tx_percentage] = table_entry
+
+        for key in sorted(tx_entry_dict.keys(), reverse=True):
+            table_data += tx_entry_dict[key]
+
+        # Append the Unknown entry at the end if it exists
+        if unknown_entry is not None:
+            table_data += unknown_entry
+
+        # And now the total
+        table_data.append([])
+        table_data.append([
+            "Total",
+            "",
+            total_rx,
+            total_rx,
+            float(100),
+            float(100)
+        ])
+
+        # Now generate a pretty table and return it
+        table = AsciiTable(table_data)
+        return table.table
+
+    def replace_tokens(self, text):
+        '''Does additional token replacement for unknown machines'''
+        base_template = string.Template(text)
+        return base_template.substitute(
+            org_name=self.organization.name,
+            site_name=self.site.name,
+            country_breakdown=self.generate_country_breakdown()
+        )

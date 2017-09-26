@@ -67,7 +67,7 @@ class TsharkTrafficReport(object):
 
         return traffic_log
 
-GeoipSummaryRecord = collections.namedtuple('GeoipSummaryRecord', 
+GeoipSummaryRecord = collections.namedtuple('GeoipSummaryRecord',
                                             'country_name region_name \
                                             total_rx_bytes total_tx_bytes')
 MachineGeoIpRecord = collections.namedtuple('MachineGeoIpRecord',
@@ -154,8 +154,8 @@ class TsharkTrafficReportManager(object):
             existing_db_conn=db_conn)
 
         traffic_breakdown_records = []
-        for record in traffic_breakdown_records:
-            traffic_breakdown_results.append(
+        for record in traffic_breakdown_results:
+            traffic_breakdown_records.append(
                 FullConnectionGeoIpRecord(
                     local_ip=ipaddress.ip_address(record['local_ip']),
                     global_ip=ipaddress.ip_address(record['global_ip']),
@@ -172,6 +172,26 @@ class TsharkTrafficReportManager(object):
         return traffic_breakdown_records
 
 
-    def generate_report_emails(self, send=True, db_conn=None):
+    def generate_report_emails(self,
+                               start_period: datetime.datetime,
+                               end_period: datetime.datetime,
+                               db_conn,
+                               send=True):
         '''Generates a report email breaking down traffic by country destination'''
 
+        tr_email = ndr_server.TsharkTrafficReportMessage(self.organization,
+                                                         self.site,
+                                                         self,
+                                                         start_period,
+                                                         end_period,
+                                                         db_conn)
+
+        if send is True:
+            alert_contacts = self.organization.get_contacts(db_conn=db_conn)
+
+            for contact in alert_contacts:
+                contact.send_message(
+                    tr_email.subject(), tr_email.prepped_message()
+                )
+
+        return tr_email

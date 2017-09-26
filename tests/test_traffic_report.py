@@ -20,6 +20,7 @@
 import unittest
 import os
 import logging
+import tempfile
 from datetime import datetime, timedelta
 
 import tests.util
@@ -50,9 +51,18 @@ class TestIngests(unittest.TestCase):
             self._nsc, self._test_site, "Test Recorder", "ndr_test_status",
             db_conn=self._db_connection)
 
+        # We need a test file contact
+        file_descriptor, self._test_contact = tempfile.mkstemp()
+        os.close(file_descriptor) # Don't need to write anything to it
+
+        ndr_server.Contact.create(
+            self._nsc, self._test_org, "file", self._test_contact,
+            db_conn=self._db_connection)
+
     def tearDown(self):
         self._db_connection.rollback()
         self._nsc.database.close()
+        os.remove(self._test_contact)
 
     def test_geoip_reporting(self):
         '''Tests GeoIP reporting information'''
@@ -65,8 +75,8 @@ class TestIngests(unittest.TestCase):
             datetime.now() - timedelta(days=1),
             datetime.now(),
             self._db_connection)
-        import pprint
-        pprint.pprint(geoip_report)
+
+        self.assertEqual(len(geoip_report), 14)
 
     def test_machine_breakdown_reporting(self):
         '''Tests breaking down data by machine'''
@@ -80,8 +90,8 @@ class TestIngests(unittest.TestCase):
             datetime.now(),
             self._db_connection)
 
-        import pprint
-        pprint.pprint(local_ip_report)
+        # Need less crappy tests
+        self.assertEqual(len(local_ip_report), 15)
 
     def test_full_host_breakdown(self):
         '''Tests full host breakdown'''
@@ -95,5 +105,23 @@ class TestIngests(unittest.TestCase):
             datetime.now(),
             self._db_connection)
 
-        import pprint
-        pprint.pprint(full_breakdown_report)
+        self.assertEqual(len(full_breakdown_report), 74)
+
+    def test_email_report(self):
+        '''Tests generation of email reports and such'''
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
+
+        report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
+                                                               self._test_site,
+                                                               self._db_connection)
+
+        report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
+                                              datetime.now(),
+                                              db_conn=self._db_connection,
+                                              send=True)
+
+        with open(self._test_contact, 'r') as f:
+            alert_email = f.read()
+            print(alert_email)
+
+        self.assertIn("This is a snapshot of internet traffic broken down by destination IP", alert_email)

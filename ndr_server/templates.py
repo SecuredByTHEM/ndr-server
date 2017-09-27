@@ -279,21 +279,22 @@ class TsharkTrafficReportMessage(BaseTemplate):
         self.subject_text = "Daily Traffic Report (v2) For Site $site_name"
         self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours.
 
-=== Traffic Breakdown By Country ===
+== Overall Breakdown By Country ==
 
 $country_breakdown
 
-=== Traffic Breakdown By Machine ===
+== Traffic Breakdown By Machine ==
 
 $machine_breakdown
 '''
 
-        self.machine_breakdown_text = '''
-Breakdown of Traffic for Host $ip_address
+        self.machine_breakdown_text = '''=== Breakdown of Traffic for Host $ip_address ===
 
-GeoLocation Breakdown
-
+==== GeoIP Breakdown ====
 $geoip_table
+
+==== Hostname Breakdown ====
+$hostname_table
 
 '''
 
@@ -321,6 +322,18 @@ $geoip_table
 
             machine_dict[report.local_ip].append(report)
 
+        # Now we do it for hostnames
+        hostname_report = self.traffic_report.retrieve_internet_host_breakdown(self.start_period,
+                                                                               self.end_period,
+                                                                               self.db_conn)
+        
+        # Break this into IPs again, and build the report
+        hostname_dict = dict()
+        for report in hostname_report:
+            if report.local_ip not in hostname_dict:
+                hostname_dict[report.local_ip] = []
+
+            hostname_dict[report.local_ip].append(report)
 
         machine_text = ""
         # Generate a new table
@@ -329,7 +342,11 @@ $geoip_table
             machine_text += machine_template.substitute(
                 ip_address=machine,
                 geoip_table=ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(
-                    machine_dict[machine])
+                    machine_dict[machine]
+                ),
+                hostname_table=ndr_server.TsharkTrafficReportManager.generate_table_internet_host_traffic(
+                    hostname_dict[machine]
+                )
             )
 
         return machine_text

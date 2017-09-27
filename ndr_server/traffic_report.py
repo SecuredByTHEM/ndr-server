@@ -228,7 +228,9 @@ class TsharkTrafficReportManager(object):
 
     @staticmethod
     def generate_table_of_geoip_breakdown(traffic_report):
-                # We'll sort on transmitted data
+        '''Generates a table of GeoIP breakdown'''
+
+        # We'll sort on transmitted data
         table_data = [
             ['Country', 'Region', 'RX Bytes', 'TX Bytes', '% Rx', '% Tx']
         ]
@@ -344,5 +346,34 @@ class TsharkTrafficReportManager(object):
         ])
 
         # Now generate a pretty table and return it
+        table = AsciiTable(table_data)
+        return table.table
+
+    @staticmethod
+    def generate_table_internet_host_traffic(traffic_report):
+        '''Generate internet host breakdown'''
+
+        table_data = [
+            ['Host', 'ISP']
+        ]
+
+        for record in traffic_report:
+            host_field = ""
+            isp_field = ""
+            # If we have a hostname, we'll use that, otherwise use the IP
+            if record.global_hostname is not None:
+                host_field = record.global_hostname
+            else:
+                host_field = record.global_ip
+
+            # If we have the ISP, set it
+            if record.isp is not None:
+                isp_field = record.isp
+
+            table_data.append([
+                host_field,
+                isp_field
+            ])
+
         table = AsciiTable(table_data)
         return table.table

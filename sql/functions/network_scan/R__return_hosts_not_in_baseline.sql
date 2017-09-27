@@ -62,7 +62,6 @@ BEGIN
             -- Do we have a hit?
             IF network_scan.is_same_host(scan_host_id, baseline_host_id) THEN
                 found = 't';
-                baseline_hosts := array_remove(baseline_hosts, baseline_host_id);
             END IF;
         END LOOP; -- baseline_hosts
 

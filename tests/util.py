@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # Copyright (C) 2017  Secured By THEM
 # Original Author: Michael Casadevall <mcasadevall@them.com>
 #
@@ -14,26 +15,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ndr_server.config import Config
-from ndr_server.organizations import Organization
-from ndr_server.db import Database
-from ndr_server.contacts import Contact, ContactMethods
-from ndr_server.sites import Site
-from ndr_server.recorder import Recorder
-from ndr_server.ingest import IngestServer
-from ndr_server.network_scan import NetworkScan
-from ndr_server.templates import (
-    TestAlertTemplate,
-    UnknownMachineTemplate,
-    RecorderAlertMessage,
-    SnortTrafficReportMessage,
-    TsharkTrafficReportMessage
-)
-from ndr_server.snort import (
-    SnortTrafficLog,
-    SnortTrafficReport
-)
-from ndr_server.traffic_report import (
-    TsharkTrafficReport,
-    TsharkTrafficReportManager
-)
+'''Utility functions helpful across multiple test modules'''
+
+import tempfile
+import shutil
+
+import ndr_server
+
+def ingest_test_file(self, filename):
+    '''Simply feeds in the response for an ingest test'''
+    file_contents = ""
+    with open(filename, 'r') as scanfile:
+        file_contents = scanfile.read()
+
+    ingest_daemon = ndr_server.IngestServer(self._nsc)
+
+    ingest_daemon.process_ingest_message(self._db_connection, self._recorder, file_contents)
+

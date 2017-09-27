@@ -20,7 +20,10 @@ import textwrap
 import datetime
 import string
 import pytz
+
 from terminaltables import AsciiTable
+
+import ndr_server
 
 # pylint: disable=line-too-long
 
@@ -174,17 +177,18 @@ $alert
             time=self.time_str
         )
 
-class TrafficReportMessage(BaseTemplate):
-    '''Traffic Reporting Emails'''
+class SnortTrafficReportMessage(BaseTemplate):
+    '''Snort Traffic Reporting Emails'''
     def __init__(self, organization, site, traffic_report):
         BaseTemplate.__init__(self, organization, site, None, None)
         self.traffic_report = traffic_report
-        self.subject_text = "Daily Traffic Report For Site $site_name"
+        self.subject_text = "Daily SNORT Traffic Report For Site $site_name"
         self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours. GeoIP data is provided by GeoLite2 data available from MaxMind.
 
 Traffic Breakdown By Country
 ===
-$country_breakdown'''
+$country_breakdown
+'''
 
     def generate_country_breakdown(self):
         '''Generates a breakdown of the traffic'''
@@ -256,4 +260,103 @@ $country_breakdown'''
             org_name=self.organization.name,
             site_name=self.site.name,
             country_breakdown=self.generate_country_breakdown()
+        )
+
+class TsharkTrafficReportMessage(BaseTemplate):
+    '''Snort Traffic Reporting Emails'''
+    def __init__(self,
+                 organization,
+                 site,
+                 traffic_report,
+                 start_period: datetime.datetime,
+                 end_period: datetime.datetime,
+                 db_conn):
+        BaseTemplate.__init__(self, organization, site, None, None)
+        self.traffic_report = traffic_report
+        self.start_period = start_period
+        self.end_period = end_period
+        self.db_conn = db_conn
+        self.subject_text = "Daily Traffic Report (v2) For Site $site_name"
+        self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours.
+
+== Overall Breakdown By Country ==
+
+$country_breakdown
+
+== Traffic Breakdown By Machine ==
+
+$machine_breakdown
+'''
+
+        self.machine_breakdown_text = '''=== Breakdown of Traffic for Host $ip_address ===
+
+==== GeoIP Breakdown ====
+$geoip_table
+
+==== Hostname Breakdown ====
+$hostname_table
+
+'''
+
+    def generate_country_breakdown(self):
+        '''Generates a breakdown of the traffic'''
+
+        # Grab the general geoip summary and do some preprocessing on it
+        traffic_report = self.traffic_report.retrieve_geoip_breakdown(self.start_period,
+                                                                      self.end_period,
+                                                                      self.db_conn)
+
+        return ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(traffic_report)
+
+    def generate_machine_breakdown(self):
+        # Grab the general geoip summary and do some preprocessing on it
+        traffic_report = self.traffic_report.retrieve_geoip_by_local_ip_breakdown(self.start_period,
+                                                                                  self.end_period,
+                                                                                  self.db_conn)
+
+        # Sort the traffic reports by machine, then generate a seperate table for each
+        machine_dict = dict()
+        for report in traffic_report:
+            if report.local_ip not in machine_dict:
+                machine_dict[report.local_ip] = []
+
+            machine_dict[report.local_ip].append(report)
+
+        # Now we do it for hostnames
+        hostname_report = self.traffic_report.retrieve_internet_host_breakdown(self.start_period,
+                                                                               self.end_period,
+                                                                               self.db_conn)
+        
+        # Break this into IPs again, and build the report
+        hostname_dict = dict()
+        for report in hostname_report:
+            if report.local_ip not in hostname_dict:
+                hostname_dict[report.local_ip] = []
+
+            hostname_dict[report.local_ip].append(report)
+
+        machine_text = ""
+        # Generate a new table
+        for machine in machine_dict:
+            machine_template = string.Template(self.machine_breakdown_text)
+            machine_text += machine_template.substitute(
+                ip_address=machine,
+                geoip_table=ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(
+                    machine_dict[machine]
+                ),
+                hostname_table=ndr_server.TsharkTrafficReportManager.generate_table_internet_host_traffic(
+                    hostname_dict[machine]
+                )
+            )
+
+        return machine_text
+
+    def replace_tokens(self, text):
+        '''Does additional token replacement for unknown machines'''
+        base_template = string.Template(text)
+        return base_template.substitute(
+            org_name=self.organization.name,
+            site_name=self.site.name,
+            country_breakdown=self.generate_country_breakdown(),
+            machine_breakdown=self.generate_machine_breakdown()
         )

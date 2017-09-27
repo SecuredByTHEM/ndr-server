@@ -17,7 +17,9 @@
 
 '''Repesentation of an recorder'''
 
+import datetime
 import time
+import ndr
 import ndr_server
 
 
@@ -87,6 +89,22 @@ class Recorder(object):
                                            existing_db_conn=db_conn)
         self.image_build_date = image_build_date
         self.image_type = image_type
+
+    def get_message_ids_recieved_in_time_period(self,
+                                                message_type: ndr.IngestMessageTypes,
+                                                start_period: datetime.datetime,
+                                                end_period: datetime.datetime,
+                                                db_conn):
+        '''Retrieves message IDs recieved in for a given period. Returns None if
+           if no ids are found'''
+        message_ids = self.config.database.run_procedure_fetchone(
+            "admin.get_recorder_message_ids_recieved_in_period",
+            [self.pg_id,
+             message_type.value,
+             start_period,
+             end_period],
+            existing_db_conn=db_conn)[0]
+        return message_ids
 
     @classmethod
     def read_by_id(cls, config, recorder_id, db_conn=None):

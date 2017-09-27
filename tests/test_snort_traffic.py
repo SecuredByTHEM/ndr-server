@@ -96,7 +96,7 @@ class TestTrafficReporting(unittest.TestCase):
         # Ingest a log so that we can pull a traffic report
         self.ingest_file(SNORT_TRAFFIC_LOG)
 
-        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
             self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
         self.assertEqual(len(traffic_report.traffic_dicts), 3)
 
@@ -106,7 +106,7 @@ class TestTrafficReporting(unittest.TestCase):
         # Ingest a log so that we can pull a traffic report
         self.ingest_file(SNORT_TRAFFIC_LOG)
 
-        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
             self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
 
         traffic_report.process_dicts()
@@ -123,7 +123,7 @@ class TestTrafficReporting(unittest.TestCase):
         '''Tests generation of statistics of SNORT traffic'''
         self.ingest_file(SNORT_TRAFFIC_LOG)
 
-        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
             self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
 
         traffic_report.process_dicts()
@@ -134,7 +134,7 @@ class TestTrafficReporting(unittest.TestCase):
         '''Tests generation of email reports and such'''
         self.ingest_file(SNORT_TRAFFIC_LOG)
 
-        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
             self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
 
         traffic_report.process_dicts()
@@ -151,7 +151,7 @@ class TestTrafficReporting(unittest.TestCase):
         '''Tests breaking down traffic by machine'''
         self.ingest_file(SNORT_TRAFFIC_LOG)
 
-        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
             self._nsc, self._test_site, LONG_SINCE_PERIOD, db_conn=self._db_connection)
         traffic_report.process_dicts()
         local_breakdown = traffic_report.breakdown_traffic_by_internal_ip()

@@ -46,6 +46,14 @@ class Database(object):
         cursor.close()
         return result
 
+    def run_procedure_fetchall(self, proc, list_args, existing_db_conn):
+        '''Runs a stored procedure, returns all, then closes the cursor'''
+
+        cursor = self.run_procedure(proc, list_args, existing_db_conn)
+        result = cursor.fetchall()
+        cursor.close()
+        return result
+
     def run_procedure(self, proc, list_args, existing_db_conn):
         '''Runs a stored procedure and returns a cursor to the result set'''
         if existing_db_conn is None:

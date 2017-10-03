@@ -19,6 +19,7 @@
 import argparse
 import logging
 
+from datetime import datetime, timedelta
 import ndr_server
 
 def main():
@@ -48,7 +49,19 @@ def main():
 
     for site in sites:
         nsc.logger.info("Processing site %s (%d)", site.name, site.pg_id)
-        traffic_report = ndr_server.TrafficReport.pull_report_for_time_interval(
+
+        # TShark Reports
+        report_manager = ndr_server.TsharkTrafficReportManager(nsc,
+                                                               site,
+                                                               db_conn)
+
+        report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
+                                              datetime.now(),
+                                              db_conn=db_conn,
+                                              send=True)
+
+        # Snort
+        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
             nsc, site, 86400, db_conn=db_conn)
 
         success = traffic_report.process_dicts()

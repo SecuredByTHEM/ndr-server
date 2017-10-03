@@ -53,7 +53,7 @@ The Secured By THEM Team
 
 You are recieving this message because you are a designated alert contact for $org_name. To be removed from future alert contacts, contact us to be removed from the alert list.
 
-All messages from Secured By THEM are digitially signed with S/MIME authethication, for more information, please see please check https://securedbythem.com/genuine-message. If this watermark is missing, this message may be a forgery. If so, please contact as soon as possible.
+All messages from Secured By THEM are digitally signed with S/MIME authentication, for more information, please see please check https://securedbythem.com/genuine-message. If this watermark is missing, this message may be a forgery. If so, please contact as soon as possible.
 
 For more information, please contact us at +1-917-716-2585 at any time day or night to review and verify recent activity detected by your Network Data Recorder. You may also contact us by replying to this email.
 '''
@@ -118,12 +118,12 @@ class UnknownMachineTemplate(BaseTemplate):
         self.machine_info = '''
 Unknown Hosts:
 $host_pp'''
-        self.message = '''The recorder $recorder_human_name at site $site_name installed for $org_name has following unknown machines. If you recently changed or aded a machine to your network, please contact us to add it to your network baseline.
+        self.message = '''The recorder $recorder_human_name at site $site_name installed for $org_name has following unknown machines. If you recently changed or added a machine to your network, please contact us to add it to your network baseline.
 
 If not, check to see if any employee has connected a phone or similar device to your network without permission.
 
 $machine_text
-This alert will repeat once every four hours until the machine is either whitelisted or removed from the network
+This alert will repeat once every four hours until the machine is either white-listed or removed from the network
 '''
 
 

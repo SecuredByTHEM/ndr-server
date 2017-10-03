@@ -16,7 +16,7 @@ DECLARE
     message_id_array bigint[];
 BEGIN
     FOR recorder_message_id IN SELECT s.id FROM public.recorder_messages AS s WHERE
-        s.recorder_id = recorder_id AND
+        s.recorder_id = _recorder_id AND
         s.received_at >= _start_timestamp AND
         s.received_at <= _end_timestamp AND
         s.message_type=_message_type

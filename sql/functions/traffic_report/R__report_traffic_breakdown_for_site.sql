@@ -19,7 +19,7 @@ DECLARE
     msg_ids bigint[];
 BEGIN
     -- Retrieve all the recorders in the site
-    recorder_ids := admin.get_recorders_in_site(_site_id);
+    recorder_ids := admin.get_all_recorders_ids_in_site(_site_id);
     FOREACH recorder_id IN ARRAY recorder_ids LOOP
         msg_ids := array_cat(
             msg_ids, 

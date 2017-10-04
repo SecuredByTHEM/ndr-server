@@ -19,8 +19,7 @@ import unittest
 import os
 import logging
 import tempfile
-import shutil
-import time
+from datetime import datetime
 
 import ndr
 import ndr_server
@@ -167,6 +166,40 @@ class TestIngests(unittest.TestCase):
         self.assertIn("Manufacturer: Asustek Computer", alert_contents)
         self.assertIn("Detection Method: arp-response", alert_contents)
 
+    def test_alert_tracker(self):
+        '''Tests the alert tracker'''
+
+        # The beatings will continue until morale improves
+        net_scan = self.load_network_scan(NMAP_ARP_SCAN)
+
+        # Now get the scan back out so we can get host ids
+        scan_dict = self._nsc.database.run_procedure_fetchone(
+            "network_scan.export_scan",
+            [net_scan.pg_id],
+            self._db_connection
+        )[0]
+
+        network_scan = ndr.NmapScan()
+        network_scan.from_dict(scan_dict)
+
+        # Pop the first host out of the scan, and then register it
+        host = network_scan.hosts.pop()
+
+        nsat = ndr_server.NetworkScanAlertTracker(self._nsc)
+        nsat.register_unknown_hosts(self._test_site, [host], self._db_connection)
+
+        # Now see if we can get it back
+        test_status = nsat.get_alert_status_for_site(self._test_site, self._db_connection)
+
+        # We should only get one row back
+        self.assertEqual(len(test_status), 1)
+
+        host_alert_status = test_status.pop()
+        self.assertEqual(host_alert_status.site_id, self._test_site.pg_id)
+        self.assertEqual(host_alert_status.host_id, host.pg_id)
+        self.assertGreaterEqual(datetime.now(), host_alert_status.generated_at)
+        self.assertGreaterEqual(datetime.now(), host_alert_status.last_seen)
+        self.assertIsNone(host_alert_status.alerted_at) # since we never alerted
 
 if __name__ == '__main__':
     unittest.main()

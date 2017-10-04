@@ -21,7 +21,10 @@ from ndr_server.contacts import Contact, ContactMethods
 from ndr_server.sites import Site
 from ndr_server.recorder import Recorder
 from ndr_server.ingest import IngestServer
-from ndr_server.network_scan import NetworkScan
+from ndr_server.network_scan import (
+    NetworkScan,
+    NetworkScanAlertTracker
+)
 from ndr_server.templates import (
     TestAlertTemplate,
     UnknownMachineTemplate,

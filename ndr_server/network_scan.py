@@ -17,6 +17,7 @@
 '''Handle network scan management and importation'''
 
 import json
+import collections
 
 import ndr
 import ndr_server
@@ -26,6 +27,55 @@ DISCOVERY_SCAN_TYPES = [
     ndr.NmapScanTypes.ND_DISCOVERY,
     ndr.NmapScanTypes.IPV6_LINK_LOCAL_DISCOVERY
 ]
+
+NetworkScanAlertStatus = collections.namedtuple('NetworkScanAlertStatus',
+                                                'site_id host_id \
+                                                 generated_at last_seen alerted_at')
+
+class NetworkScanAlertTracker(object):
+    '''Network Alert Tracker is used to register alerts with the backend, supress duplicates, and batch alerts'''
+    def __init__(self, config):
+        self.config = config
+
+    def register_unknown_hosts(self, site, hosts, db_conn):
+        '''Takes a list of NmapHosts which are unknown and registers them that they need to alert'''
+
+        for host in hosts:
+            if host.pg_id is None:
+                raise ValueError("Hosts must have a pg_id (aka, loaded from database), \
+                                  not directly loaded from message!")
+
+            self.config.database.run_procedure(
+                "alert.register_or_update_network_scan_alert",
+                [site.pg_id, host.pg_id],
+                existing_db_conn=db_conn)
+
+    def get_alert_status_for_site(self, site, db_conn):
+        '''Returns a report of alerts in the system'''
+
+        alert_rows = self.config.database.run_procedure_fetchall(
+            "alert.get_network_scan_alert_status_for_site",
+            [site.pg_id],
+            existing_db_conn=db_conn
+        )
+
+        alerts = []
+        for alert in alert_rows:
+            alerts.append(
+                NetworkScanAlertStatus(
+                    site_id=alert['site_id'],
+                    host_id=alert['host_id'],
+                    generated_at=alert['generated_at'],
+                    last_seen=alert['last_seen'],
+                    alerted_at=alert['alerted_at']
+                )
+            )
+
+        return alerts
+
+    def generate_alert_emails(self, alert_emails):
+        '''Generate alert emails as necessary'''
+
 
 class NetworkScan(object):
     '''Network Scans represent data in the database, and handling of scan differences'''

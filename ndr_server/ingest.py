@@ -21,18 +21,16 @@ import shutil
 import sys
 import glob
 import time
-import json
+import tempfile
 
 import subprocess
 
 import ndr
 import ndr_server
-import tempfile
 
 import psycopg2
 
 from cryptography import x509
-from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
 INGEST_VERSION = '0.0.3'
@@ -137,7 +135,7 @@ class IngestServer():
             network_scan = ndr_server.NetworkScan.create_from_message(
                 self.config, recorder, log_id, message, db_conn=db_connection
             )
-            network_scan.do_alerting(db_conn=db_connection)
+            network_scan.do_alert_processing(db_conn=db_connection)
 
         # Syslog Upload
         elif message.message_type == ndr.IngestMessageTypes.SYSLOG_UPLOAD:

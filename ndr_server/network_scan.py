@@ -33,7 +33,9 @@ NetworkScanAlertStatus = collections.namedtuple('NetworkScanAlertStatus',
                                                  generated_at last_seen alerted_at')
 
 class NetworkScanAlertTracker(object):
-    '''Network Alert Tracker is used to register alerts with the backend, supress duplicates, and batch alerts'''
+    '''Network Alert Tracker is used to register alerts with the backend,
+       supress duplicates, and batch alerts'''
+
     def __init__(self, config):
         self.config = config
 
@@ -73,8 +75,19 @@ class NetworkScanAlertTracker(object):
 
         return alerts
 
-    def generate_alert_emails(self, alert_emails):
+    def generate_alert_emails_for_site(self, site, db_conn):
         '''Generate alert emails as necessary'''
+
+        # Retrieve our own records.
+        alert_status = self.get_alert_status_for_site(site, db_conn)
+
+        alerts_to_send = []
+
+        # Determine which alerts to send
+        for alert in alert_status:
+            # If we've never alerted for this machine, add it to the send list
+            if alert.alerted_at is None:
+                alerts_to_send.append(alert)
 
 
 class NetworkScan(object):
@@ -105,32 +118,38 @@ class NetworkScan(object):
 
         return net_scan
 
-    def do_alerting(self, db_conn=None):
+    def do_alert_processing(self, db_conn=None):
         '''Raises any alerts based on the type of scan it is'''
 
         # For the time being, we only do alerting for discovery scans.
+        nsat = ndr_server.NetworkScanAlertTracker(self.config)
+        site = self.recorder.get_site(db_conn)
+
         if self.nmap_scan.scan_type in DISCOVERY_SCAN_TYPES:
             unknown_hosts = self.get_unknown_hosts_from_scan(db_conn)
             if unknown_hosts is None:
                 # We know evertyhing
                 return
 
+            # Register the unknown hosts with the alert tracker
+            nsat.register_unknown_hosts(site, unknown_hosts, db_conn)
+
             # Get the necessary bits of info required to send alerts
-            site = self.recorder.get_site(db_conn=db_conn)
-            organization = site.get_organization(db_conn=db_conn)
-            alert_contacts = organization.get_contacts(db_conn=db_conn)
+            #site = self.recorder.get_site(db_conn=db_conn)
+            #organization = site.get_organization(db_conn=db_conn)
+            #alert_contacts = organization.get_contacts(db_conn=db_conn)
 
             # Generate the alert message
-            msg = ndr_server.UnknownMachineTemplate(
-                organization, site, self.recorder, unknown_hosts, self.message.generated_at
-            )
+            #msg = ndr_server.UnknownMachineTemplate(
+            #    organization, site, self.recorder, unknown_hosts, self.message.generated_at
+            #)
 
-            alert_contacts = organization.get_contacts(db_conn=db_conn)
+            #alert_contacts = organization.get_contacts(db_conn=db_conn)
 
-            for contact in alert_contacts:
-                contact.send_message(
-                    msg.subject(), msg.prepped_message()
-                )
+            #for contact in alert_contacts:
+            #    contact.send_message(
+            #        msg.subject(), msg.prepped_message()
+            #    )
 
     def get_unknown_hosts_from_scan(self, db_conn=None):
         '''Determines what hosts are unknown'''

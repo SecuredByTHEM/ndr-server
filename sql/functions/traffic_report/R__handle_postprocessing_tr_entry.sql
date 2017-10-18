@@ -47,18 +47,18 @@ if ($src_ip_type eq 'PRIVATE' && $dst_ip_type eq 'PUBLIC') {
     $global_hostname_id = $tr_row->{'dst_hostname_id'};
     $local_ip = $src_ip->ip();
     $local_ip_id = $tr_row->{'src_ip_id'};
-    elog(WARNING, "Outbound connection");
+    #elog(WARNING, "Outbound connection");
 } elsif ($src_ip_type eq 'PUBLIC' && $dst_ip_type eq 'PRIVATE') {
     $global_ip = $src_ip->ip();
     $global_ip_id = $tr_row->{'src_ip_id'};
     $global_hostname_id = $tr_row->{'src_hostname_id'};
     $local_ip = $dst_ip->ip();
     $local_ip_id = $tr_row->{'dst_ip_id'};
-    elog(WARNING, "Inbound connection");
+    #elog(WARNING, "Inbound connection");
 } elsif ($src_ip_type eq 'PUBLIC' && $dst_ip_type eq 'PUBLIC') {
     elog(ERROR, "PUBLIC-PUBLIC connections not supported!");
 } else {
-    elog(WARNING, "Non-internet facing connection, nothing to be done");
+    #elog(WARNING, "Non-internet facing connection, nothing to be done");
     return;
 }
 

@@ -19,6 +19,8 @@
 import ipaddress
 import datetime
 import collections
+import csv
+import io
 
 from terminaltables import AsciiTable
 
@@ -206,7 +208,8 @@ class TsharkTrafficReportManager(object):
                                start_period: datetime.datetime,
                                end_period: datetime.datetime,
                                db_conn,
-                               send=True):
+                               send=True,
+                               csv_output=False):
         '''Generates a report email breaking down traffic by country destination'''
 
         tr_email = ndr_server.TsharkTrafficReportMessage(self.organization,
@@ -214,20 +217,31 @@ class TsharkTrafficReportManager(object):
                                                          self,
                                                          start_period,
                                                          end_period,
-                                                         db_conn)
+                                                         db_conn,
+                                                         csv_output)
 
         if send is True:
             alert_contacts = self.organization.get_contacts(db_conn=db_conn)
 
+            # We need to get the prepped message first if we're CSV
+            subject = tr_email.subject()
+            message = tr_email.prepped_message()
+
+            attachment_tuple = None
+            if csv_output is True:
+                current_time = datetime.datetime.today().strftime('%Y-%m-%d')
+                filename = "breakdown_" + current_time + ".csv"
+                attachment_tuple = [(tr_email.csv_output_text, filename)]
+
             for contact in alert_contacts:
                 contact.send_message(
-                    tr_email.subject(), tr_email.prepped_message()
+                    subject, message, attachment_tuple
                 )
 
         return tr_email
 
     @staticmethod
-    def generate_table_of_geoip_breakdown(traffic_report):
+    def generate_table_of_geoip_breakdown(traffic_report, csv_output=False):
         '''Generates a table of GeoIP breakdown'''
 
         # We'll sort on transmitted data
@@ -310,10 +324,15 @@ class TsharkTrafficReportManager(object):
             ])
 
             # Calculate the precentage of the total
+            if csv_output is False:
+                first_field = ""
+            else:
+                first_field = country
+
             if len(sorted_trs[country]) != 1:
                 for report in sorted_trs[country]:
                     table_entry.append([
-                        "",
+                        first_field,
                         report.region_name,
                         report.total_rx_bytes,
                         report.total_tx_bytes,
@@ -330,31 +349,40 @@ class TsharkTrafficReportManager(object):
         for key in sorted(tx_entry_dict.keys(), reverse=True):
             table_data += tx_entry_dict[key]
 
-        # Append the Unknown entry at the end if it exists
-        if unknown_entry is not None:
-            table_data += unknown_entry
+        if csv_output is False:
+            # Append the Unknown entry at the end if it exists
+            if unknown_entry is not None:
+                table_data += unknown_entry
 
-        # And now the total
-        table_data.append([])
-        table_data.append([
-            "Total",
-            "",
-            total_rx,
-            total_rx,
-            float(100),
-            float(100)
-        ])
+            # And now the total
+            table_data.append([])
+            table_data.append([
+                "Total",
+                "",
+                total_rx,
+                total_rx,
+                float(100),
+                float(100)
+            ])
 
-        # Now generate a pretty table and return it
-        table = AsciiTable(table_data)
-        return table.table
+            # Now generate a pretty table and return it
+            table = AsciiTable(table_data)
+            return table.table
+        else:
+            # This is horrible and hacky
+            csv_contents = io.StringIO()
+            writer = csv.writer(csv_contents)
+
+            for row in table_data:
+                writer.writerow(row)
+
+            return csv_contents.getvalue()
 
     @staticmethod
-    def generate_table_internet_host_traffic(traffic_report):
+    def generate_table_internet_host_traffic(traffic_report, csv_output=False):
         '''Generate internet host breakdown'''
 
         table_data = [
-            ['Host', 'ISP']
         ]
 
         for record in traffic_report:
@@ -375,5 +403,23 @@ class TsharkTrafficReportManager(object):
                 isp_field
             ])
 
-        table = AsciiTable(table_data)
-        return table.table
+        # CAST THY DUPLICATES OUT
+        deduped_table_data = []
+        for row in table_data:
+            if row not in deduped_table_data:
+                deduped_table_data.append(row)
+        
+        table_data = deduped_table_data
+
+        if csv_output is False:
+            table = AsciiTable(table_data)
+            return table.table
+        else:
+            # This is horrible and hacky
+            csv_contents = io.StringIO()
+            writer = csv.writer(csv_contents)
+
+            for row in table_data:
+                writer.writerow(row)
+
+            return csv_contents.getvalue()

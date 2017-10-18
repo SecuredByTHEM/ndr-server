@@ -119,8 +119,7 @@ class TestIngests(unittest.TestCase):
             datetime.now(),
             self._db_connection)
 
-        import pprint
-        pprint.pprint(internet_host_breakdown)
+        self.assertEqual(len(internet_host_breakdown), 74)
 
     def test_email_report(self):
         '''Tests generation of email reports and such'''
@@ -133,9 +132,29 @@ class TestIngests(unittest.TestCase):
         report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
                                               datetime.now(),
                                               db_conn=self._db_connection,
-                                              send=True)
+                                              send=True,
+                                              csv_output=False)
 
         with open(self._test_contact, 'r') as f:
             alert_email = f.read()
 
         self.assertIn("This is a snapshot of internet traffic broken down by destination IP", alert_email)
+
+    def test_email_report_csv(self):
+        '''Tests generation of email reports with CSV and such'''
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
+
+        report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
+                                                               self._test_site,
+                                                               self._db_connection)
+
+        report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
+                                              datetime.now(),
+                                              db_conn=self._db_connection,
+                                              send=True,
+                                              csv_output=True)
+
+        with open(self._test_contact, 'r') as f:
+            alert_email = f.read()
+
+        self.assertIn("Attached to this email is a CSV breakdown of all traffic for the last 24 hours.", alert_email)

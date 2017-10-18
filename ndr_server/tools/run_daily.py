@@ -60,17 +60,6 @@ def main():
                                               db_conn=db_conn,
                                               send=True)
 
-        # Snort
-        traffic_report = ndr_server.SnortTrafficReport.pull_report_for_time_interval(
-            nsc, site, 86400, db_conn=db_conn)
-
-        success = traffic_report.process_dicts()
-        if success is True:
-            traffic_report.generate_statistics()
-            traffic_report.generate_report_emails(send=True, db_conn=db_conn)
-        else:
-            nsc.logger.warning("Failed to process traffic dicts for site %d", site.pg_id)
-
     db_conn.commit()
 
 if __name__ == '__main__':

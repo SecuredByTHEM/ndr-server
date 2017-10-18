@@ -26,6 +26,7 @@ import subprocess
 import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 
 class Contact(object):
     '''Contacts represent people we reach when shit hits the fan. Contacts are currently attached
@@ -101,7 +102,7 @@ class Contact(object):
 
         return signed_message
 
-    def send_message(self, subject, message):
+    def send_message(self, subject, message, attachments=None):
         '''Sends an alert message'''
 
         if self.config.smime_enabled is True:
@@ -116,7 +117,18 @@ class Contact(object):
             body = message
             mime_msg.attach(MIMEText(body, 'plain'))
 
-            message = mime_msg.__str__() # Required to get UTF-8 email
+            if attachments is not None:
+                for attachment in attachments:
+                    part = MIMEApplication(
+                        attachment[0],
+                        Name=attachment[1]
+                    )
+
+                    # Add attachment header to this MIME part
+                    part['Content-Disposition'] = 'attachment; filename="%s"' % attachment[1]
+                    mime_msg.attach(part)
+
+                message = mime_msg.__str__() # Required to get UTF-8 email
 
         if self.method == ContactMethods.EMAIL:
             if self.config.smtp_disabled:

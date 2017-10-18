@@ -270,12 +270,15 @@ class TsharkTrafficReportMessage(BaseTemplate):
                  traffic_report,
                  start_period: datetime.datetime,
                  end_period: datetime.datetime,
-                 db_conn):
+                 db_conn=None,
+                 csv_output=False):
         BaseTemplate.__init__(self, organization, site, None, None)
         self.traffic_report = traffic_report
         self.start_period = start_period
         self.end_period = end_period
         self.db_conn = db_conn
+        self.csv_output = csv_output
+        self.csv_output_text = None
         self.subject_text = "Daily Traffic Report (v2) For Site $site_name"
         self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours.
 
@@ -288,6 +291,15 @@ $country_breakdown
 $machine_breakdown
 '''
 
+        self.message_csv = '''Attached to this email is a CSV breakdown of all traffic for the last 24 hours.'''
+
+        self.csv_breakdown = '''Country Breakdown For $site_name
+$country_breakdown
+
+$machine_breakdown
+'''
+
+
         self.machine_breakdown_text = '''=== Breakdown of Traffic for Host $ip_address ===
 
 ==== GeoIP Breakdown ====
@@ -298,6 +310,14 @@ $hostname_table
 
 '''
 
+        self.machine_breakdown_csv = '''
+Host Machine $ip_address
+$geoip_table
+
+Hostname Breakdown For $ip_address
+$hostname_table
+
+'''
     def generate_country_breakdown(self):
         '''Generates a breakdown of the traffic'''
 
@@ -306,7 +326,7 @@ $hostname_table
                                                                       self.end_period,
                                                                       self.db_conn)
 
-        return ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(traffic_report)
+        return ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(traffic_report, self.csv_output)
 
     def generate_machine_breakdown(self):
         # Grab the general geoip summary and do some preprocessing on it
@@ -336,16 +356,22 @@ $hostname_table
             hostname_dict[report.local_ip].append(report)
 
         machine_text = ""
+
+        if self.csv_output is True:
+            machine_output = self.machine_breakdown_csv
+        else:
+            machine_output = self.machine_breakdown_text
+
         # Generate a new table
         for machine in machine_dict:
-            machine_template = string.Template(self.machine_breakdown_text)
+            machine_template = string.Template(machine_output)
             machine_text += machine_template.substitute(
                 ip_address=machine,
                 geoip_table=ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(
-                    machine_dict[machine]
+                    machine_dict[machine], self.csv_output
                 ),
                 hostname_table=ndr_server.TsharkTrafficReportManager.generate_table_internet_host_traffic(
-                    hostname_dict[machine]
+                    hostname_dict[machine], self.csv_output
                 )
             )
 
@@ -353,10 +379,25 @@ $hostname_table
 
     def replace_tokens(self, text):
         '''Does additional token replacement for unknown machines'''
-        base_template = string.Template(text)
-        return base_template.substitute(
-            org_name=self.organization.name,
-            site_name=self.site.name,
-            country_breakdown=self.generate_country_breakdown(),
-            machine_breakdown=self.generate_machine_breakdown()
-        )
+
+        if self.csv_output is True:
+            self.message = self.message_csv
+            base_template = string.Template(text)
+
+            # Generate the CSV breakdown
+            csv_breakdown = self.generate_country_breakdown() + self.generate_machine_breakdown()
+
+            self.csv_output_text = csv_breakdown
+
+            return base_template.substitute(
+                org_name=self.organization.name,
+                site_name=self.site.name,
+            )
+        else:
+            base_template = string.Template(text)
+            return base_template.substitute(
+                org_name=self.organization.name,
+                site_name=self.site.name,
+                country_breakdown=self.generate_country_breakdown(),
+                machine_breakdown=self.generate_machine_breakdown()
+            )

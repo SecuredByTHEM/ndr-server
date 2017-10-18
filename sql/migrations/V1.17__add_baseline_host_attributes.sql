@@ -1,0 +1,1 @@
+ALTER TABLE network_scan.baseline_hosts ADD COLUMN human_name text;

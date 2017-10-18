@@ -217,6 +217,7 @@ class TsharkTrafficReportManager(object):
                                                          self,
                                                          start_period,
                                                          end_period,
+                                                         self.config,
                                                          db_conn,
                                                          csv_output)
 

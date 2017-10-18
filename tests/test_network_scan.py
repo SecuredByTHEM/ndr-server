@@ -167,6 +167,72 @@ class TestIngests(unittest.TestCase):
         self.assertIn("Manufacturer: Asustek Computer", alert_contents)
         self.assertIn("Detection Method: arp-response", alert_contents)
 
+    def test_baseline_host_object(self):
+        '''This tests the functionality of adding a host to a
+           baseline properly removes it from unknown hosts'''
+
+        # First, create a scan and import it
+        net_scan = self.load_network_scan(NMAP_ARP_SCAN)
+        unk_host_objs = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
+        self.assertEqual(len(unk_host_objs), 3)
+
+        # Now, let's take the top object, add it to the baseline
+        host_to_baseline = unk_host_objs.pop()
+        self.assertIsNotNone(host_to_baseline.pg_id)
+
+        ndr_server.NetworkScan.add_host_to_baseline(self._nsc,
+                                                    host_to_baseline.pg_id,
+                                                    db_conn=self._db_connection)
+
+        baseline_hosts = ndr_server.BaselineHost.read_all_for_site(
+            self._nsc, self._test_site, self._db_connection
+        )
+
+        self.assertEqual(len(baseline_hosts), 1)
+
+        baseline_host = baseline_hosts.pop()
+        self.assertEqual(baseline_host.site_id, self._test_site.pg_id)
+        self.assertIsNone(baseline_host.human_name)
+
+        # Set a human name and we'll check it on the readback
+        baseline_host.set_human_name("Test Human Name", db_conn=self._db_connection)
+
+        # Check the read by ID method
+        baseline_host2 = ndr_server.BaselineHost.read_by_id(
+            self._nsc, baseline_host.pg_id, self._db_connection
+        )
+
+        self.assertEqual(baseline_host.pg_id, baseline_host2.pg_id)
+        self.assertEqual(baseline_host2.human_name, "Test Human Name")
+
+    def test_searching_by_most_recent_ip(self):
+        '''Tests searching by the most recent IP address'''
+
+        # First, create a scan and import it
+        net_scan = self.load_network_scan(NMAP_ARP_SCAN)
+        unk_host_objs = net_scan.get_unknown_hosts_from_scan(db_conn=self._db_connection)
+        self.assertEqual(len(unk_host_objs), 3)
+
+        # Now, let's take the top object, add it to the baseline
+        for host in unk_host_objs:
+            ndr_server.NetworkScan.add_host_to_baseline(self._nsc,
+                                                        host.pg_id,
+                                                        db_conn=self._db_connection)
+
+        # Now let's try searching for these hosts
+        bh1 = ndr_server.BaselineHost.find_all_by_most_recent_ip(
+            self._nsc, self._test_site, "192.168.2.3", self._db_connection
+        )[0]
+        bh2 = ndr_server.BaselineHost.find_all_by_most_recent_ip(
+            self._nsc, self._test_site, "192.168.2.1", self._db_connection
+        )[0]
+        bh3 = ndr_server.BaselineHost.find_all_by_most_recent_ip(
+            self._nsc, self._test_site, "192.168.2.145", self._db_connection
+        )[0]
+
+        self.assertNotEqual(bh1.pg_id, bh2.pg_id)
+        self.assertNotEqual(bh1.pg_id, bh3.pg_id)
+        self.assertNotEqual(bh2.pg_id, bh3.pg_id)
 
 if __name__ == '__main__':
     unittest.main()

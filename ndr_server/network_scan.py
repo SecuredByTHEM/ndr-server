@@ -115,3 +115,78 @@ class NetworkScan(object):
         config.database.run_procedure(
             "network_scan.add_host_to_baseline", [host_pg_id],
             existing_db_conn=db_conn)
+
+
+class BaselineHost(object):
+    '''Represents a baseline host object in the schema'''
+    def __init__(self, config):
+        self.pg_id = None
+        self.site_id = None
+        self.config = config
+        self.human_name = None
+
+    @classmethod
+    def read_by_id(cls, config, pg_id, db_conn):
+        '''Reads a baseline host'''
+
+        bhost_dict = config.database.config.database.run_procedure_fetchone(
+            "network_scan.get_baseline_host_by_id", [pg_id],
+            existing_db_conn=db_conn)
+
+        bhost = BaselineHost(config).from_dict(bhost_dict)
+        return bhost
+
+    def from_dict(self, bhost_dict):
+        '''Deserializes a bhost'''
+        self.pg_id = bhost_dict['id']
+        self.site_id = bhost_dict['site_id']
+        self.human_name = bhost_dict['human_name']
+
+        return self
+
+    def set_human_name(self, human_name, db_conn=None):
+        '''Sets the human name in the database'''
+
+        self.config.database.run_procedure(
+            "network_scan.set_baseline_host_human_name", [self.pg_id, human_name],
+            existing_db_conn=db_conn
+        )
+
+        self.human_name = human_name
+
+    @classmethod
+    def find_all_by_most_recent_ip(self, config, site, ip_address, db_conn):
+        '''Reads a baseline host'''
+
+        # This may return multiple entries so ...
+        cursor = config.database.config.database.run_procedure(
+            "network_scan.get_baseline_host_by_most_recent_ip_address", [site.pg_id, ip_address],
+            existing_db_conn=db_conn)
+
+        bhost_dicts = cursor.fetchall()
+        cursor.close()
+
+        bhosts = []
+        for bhost_dict in bhost_dicts:
+            bhost = BaselineHost(config).from_dict(bhost_dict)
+            bhosts.append(bhost)
+
+        return bhosts
+
+    @staticmethod
+    def read_all_for_site(config, site, db_conn):
+        '''Reads all baseline hosts per site'''
+
+        cursor = config.database.config.database.run_procedure(
+            "network_scan.get_all_baseline_hosts_for_site", [site.pg_id],
+            existing_db_conn=db_conn)
+
+        bhost_dicts = cursor.fetchall()
+        cursor.close()
+
+        bhosts = []
+        for bhost_dict in bhost_dicts:
+            bhost = BaselineHost(config).from_dict(bhost_dict)
+            bhosts.append(bhost)
+
+        return bhosts

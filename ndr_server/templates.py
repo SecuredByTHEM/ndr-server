@@ -270,9 +270,11 @@ class TsharkTrafficReportMessage(BaseTemplate):
                  traffic_report,
                  start_period: datetime.datetime,
                  end_period: datetime.datetime,
+                 nss_config,
                  db_conn=None,
                  csv_output=False):
         BaseTemplate.__init__(self, organization, site, None, None)
+        self.config = nss_config
         self.traffic_report = traffic_report
         self.start_period = start_period
         self.end_period = end_period
@@ -300,7 +302,7 @@ $machine_breakdown
 '''
 
 
-        self.machine_breakdown_text = '''=== Breakdown of Traffic for Host $ip_address ===
+        self.machine_breakdown_text = '''=== Breakdown of Traffic for Host $ip_address $host_name ===
 
 ==== GeoIP Breakdown ====
 $geoip_table
@@ -311,10 +313,10 @@ $hostname_table
 '''
 
         self.machine_breakdown_csv = '''
-Host Machine $ip_address
+Host Machine $ip_address $host_name
 $geoip_table
 
-Hostname Breakdown For $ip_address
+Hostname Breakdown For $ip_address $host_name
 $hostname_table
 
 '''
@@ -346,7 +348,7 @@ $hostname_table
         hostname_report = self.traffic_report.retrieve_internet_host_breakdown(self.start_period,
                                                                                self.end_period,
                                                                                self.db_conn)
-        
+
         # Break this into IPs again, and build the report
         hostname_dict = dict()
         for report in hostname_report:
@@ -365,8 +367,24 @@ $hostname_table
         # Generate a new table
         for machine in machine_dict:
             machine_template = string.Template(machine_output)
+
+            # See if we have a human name for this
+            bh_hosts = ndr_server.BaselineHost.find_all_by_most_recent_ip(
+                self.config,
+                self.site,
+                machine.compressed,
+                self.db_conn)
+
+            machine_name = ""
+            if len(bh_hosts) == 1:
+                # Either got zero or more than one response
+                bh_host = bh_hosts.pop()
+                if bh_host.human_name is not None:
+                    machine_name = "(" + bh_host.human_name + ")"
+
             machine_text += machine_template.substitute(
                 ip_address=machine,
+                host_name=machine_name,
                 geoip_table=ndr_server.TsharkTrafficReportManager.generate_table_of_geoip_breakdown(
                     machine_dict[machine], self.csv_output
                 ),

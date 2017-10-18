@@ -82,7 +82,7 @@ class Contact(object):
 
             openssl_cmd = ["openssl", "smime", "-sign", "-md", "sha256", "-in", unsigned_msg_file,
                            "-signer", self.config.smime_mail_certfile, "-inkey",
-                           self.config.smime_mail_private_key, "-text",
+                           self.config.smime_mail_private_key,
                            "-to", self.value,
                            "-from", self.config.mail_from,
                            "-subject", subject]
@@ -105,30 +105,30 @@ class Contact(object):
     def send_message(self, subject, message, attachments=None):
         '''Sends an alert message'''
 
+        # We need to generate the message headers
+        mime_msg = MIMEMultipart()
+        mime_msg['From'] = self.config.mail_from
+        mime_msg['To'] = self.value
+        mime_msg['Subject'] = subject
+        body = message
+        mime_msg.attach(MIMEText(body, 'plain'))
+
+        if attachments is not None:
+            for attachment in attachments:
+                part = MIMEApplication(
+                    attachment[0],
+                    Name=attachment[1]
+                )
+
+                # Add attachment header to this MIME part
+                part['Content-Disposition'] = 'attachment; filename="%s"' % attachment[1]
+                mime_msg.attach(part)
+
+            message = mime_msg.__str__() # Required to get UTF-8 email
+
         if self.config.smime_enabled is True:
             # OpenSSL will generate the message headers
             message = self.sign_email(subject, message)
-        else:
-            # We need to generate the message headers
-            mime_msg = MIMEMultipart()
-            mime_msg['From'] = self.config.mail_from
-            mime_msg['To'] = self.value
-            mime_msg['Subject'] = subject
-            body = message
-            mime_msg.attach(MIMEText(body, 'plain'))
-
-            if attachments is not None:
-                for attachment in attachments:
-                    part = MIMEApplication(
-                        attachment[0],
-                        Name=attachment[1]
-                    )
-
-                    # Add attachment header to this MIME part
-                    part['Content-Disposition'] = 'attachment; filename="%s"' % attachment[1]
-                    mime_msg.attach(part)
-
-                message = mime_msg.__str__() # Required to get UTF-8 email
 
         if self.method == ContactMethods.EMAIL:
             if self.config.smtp_disabled:

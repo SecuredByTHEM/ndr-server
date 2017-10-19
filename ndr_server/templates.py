@@ -376,8 +376,9 @@ $hostname_table
                 self.db_conn)
 
             machine_name = ""
-            if len(bh_hosts) == 1:
-                # Either got zero or more than one response
+            if len(bh_hosts) != 0:
+                # Either got zero or more than one response.
+                # FIXME - we don't handle multiple responses right so this needs a rethink
                 bh_host = bh_hosts.pop()
                 if bh_host.human_name is not None:
                     machine_name = "(" + bh_host.human_name + ")"

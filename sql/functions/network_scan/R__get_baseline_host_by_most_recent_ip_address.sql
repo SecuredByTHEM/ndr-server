@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION network_scan.get_baseline_host_by_most_recent_ip_addr
 BEGIN
     -- this doesn't entirely work correctly since it sometimes only matches on SD scans. Need
     -- to sit and debug this but its good enough for now.
-    RETURN QUERY SELECT DISTINCT bh.id, bh.* FROM network_scan.flattened_baseline_hosts_with_attributes AS bh,
+    RETURN QUERY SELECT DISTINCT bh.* FROM network_scan.flattened_baseline_hosts_with_attributes AS bh,
             (SELECT host_id, scan_type FROM network_scan.flattened_host_addresses AS fha
              LEFT JOIN network_scan.scans AS nss ON (fha.scan_id=nss.id)
              LEFT JOIN public.recorder_messages AS rm ON (rm.id=nss.msg_id)

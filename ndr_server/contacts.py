@@ -24,9 +24,10 @@ import tempfile
 import os
 import subprocess
 import sys
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
 
 class Contact(object):
     '''Contacts represent people we reach when shit hits the fan. Contacts are currently attached
@@ -34,10 +35,11 @@ class Contact(object):
        security officer. We might add additional abilities to localize contacts to a site level in
        future'''
 
-    def __init__(self, config, method, value):
+    def __init__(self, config, method, value, output_format='csv'):
         self.config = config
         self.method = ContactMethods(method)
         self.value = value
+        self.output_format = OutputFormats(output_format)
         self.pg_id = None
         self.org_id = None
 
@@ -45,14 +47,15 @@ class Contact(object):
         return self.__dict__ == other.__dict__
 
     @classmethod
-    def create(cls, config, organization, method, value, db_conn=None):
+    def create(cls, config, organization, method, value, output_format='csv', db_conn=None):
         '''Creates a new contact attached to an organization'''
 
-        contact = Contact(config, method, value)
+        contact = Contact(config, method, value, output_format)
         contact.org_id = organization.pg_id
 
         contact.pg_id = config.database.run_procedure_fetchone(
-            "admin.insert_contact", [organization.pg_id, method, value],
+            "admin.insert_contact",
+            [organization.pg_id, method, value, output_format],
             existing_db_conn=db_conn)[0]
 
         return contact
@@ -60,7 +63,7 @@ class Contact(object):
     @classmethod
     def from_dict(cls, config, contact_dict):
         '''Deserializes an organization from a dictionary'''
-        contact = Contact(config, contact_dict['method'], contact_dict['value'])
+        contact = Contact(config, contact_dict['method'], contact_dict['value'], contact_dict['output_format'])
         contact.pg_id = contact_dict['id']
         contact.org_id = contact_dict['org_id']
 
@@ -115,10 +118,9 @@ class Contact(object):
 
         if attachments is not None:
             for attachment in attachments:
-                part = MIMEApplication(
-                    attachment[0],
-                    Name=attachment[1]
-                )
+                part = MIMEBase('application', "octet-stream")
+                part.set_payload(attachment[0])
+                encoders.encode_base64(part)
 
                 # Add attachment header to this MIME part
                 part['Content-Disposition'] = 'attachment; filename="%s"' % attachment[1]
@@ -160,3 +162,8 @@ class ContactMethods(Enum):
     '''Known methods to contact folks'''
     EMAIL = "email"
     FILE = "file" # Writes the message to a file, used for testing
+
+class OutputFormats(Enum):
+    INLINE = "inline"
+    CSV = "csv"
+    ZIP = "zip"

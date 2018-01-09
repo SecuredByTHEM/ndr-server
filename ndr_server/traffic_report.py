@@ -21,6 +21,7 @@ import datetime
 import collections
 import csv
 import io
+import zipfile
 
 from terminaltables import AsciiTable
 
@@ -208,33 +209,45 @@ class TsharkTrafficReportManager(object):
                                start_period: datetime.datetime,
                                end_period: datetime.datetime,
                                db_conn,
-                               send=True,
-                               csv_output=False):
+                               send=True):
         '''Generates a report email breaking down traffic by country destination'''
-
-        tr_email = ndr_server.TsharkTrafficReportMessage(self.organization,
-                                                         self.site,
-                                                         self,
-                                                         start_period,
-                                                         end_period,
-                                                         self.config,
-                                                         db_conn,
-                                                         csv_output)
 
         if send is True:
             alert_contacts = self.organization.get_contacts(db_conn=db_conn)
 
-            # We need to get the prepped message first if we're CSV
-            subject = tr_email.subject()
-            message = tr_email.prepped_message()
-
             attachment_tuple = None
-            if csv_output is True:
-                current_time = datetime.datetime.today().strftime('%Y-%m-%d')
-                filename = "breakdown_" + current_time + ".csv"
-                attachment_tuple = [(tr_email.csv_output_text, filename)]
+            current_time = datetime.datetime.today().strftime('%Y-%m-%d')
+            filename = "breakdown_" + current_time + ".csv"
+            zip_archive = "breakdown_" + current_time + ".zip"
 
             for contact in alert_contacts:
+                csv_output = True
+                if contact.output_format is ndr_server.OutputFormats.INLINE:
+                    csv_output = False
+
+                tr_email = ndr_server.TsharkTrafficReportMessage(self.organization,
+                                                                 self.site,
+                                                                 self,
+                                                                 start_period,
+                                                                 end_period,
+                                                                 self.config,
+                                                                 db_conn,
+                                                                 csv_output=csv_output)
+
+                subject = tr_email.subject()
+                message = tr_email.prepped_message()
+
+                if contact.output_format is ndr_server.OutputFormats.CSV:
+                    attachment_tuple = [(bytes(tr_email.csv_output_text, 'utf-8'), filename, False)]
+                elif contact.output_format is ndr_server.OutputFormats.ZIP:
+                    # This is annoying to handle and process, make a temporary directory first
+                    zip_buffer = io.BytesIO()
+                    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+                        zip_file.writestr(filename, tr_email.csv_output_text)
+                    
+                    attachment_tuple = [(zip_buffer.getvalue(), zip_archive, True)]
+
+                # And send it
                 contact.send_message(
                     subject, message, attachment_tuple
                 )

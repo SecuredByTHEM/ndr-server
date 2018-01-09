@@ -55,14 +55,31 @@ class TestIngests(unittest.TestCase):
         file_descriptor, self._test_contact = tempfile.mkstemp()
         os.close(file_descriptor) # Don't need to write anything to it
 
+        file_descriptor, self._test_contact_zip = tempfile.mkstemp()
+        os.close(file_descriptor) # Don't need to write anything to it
+
+        file_descriptor, self._test_contact_inline = tempfile.mkstemp()
+        os.close(file_descriptor) # Don't need to write anything to it
+
+
         ndr_server.Contact.create(
             self._nsc, self._test_org, "file", self._test_contact,
+            db_conn=self._db_connection)
+
+        ndr_server.Contact.create(
+            self._nsc, self._test_org, "file", self._test_contact_inline, output_format="inline",
+            db_conn=self._db_connection)
+
+        ndr_server.Contact.create(
+            self._nsc, self._test_org, "file", self._test_contact_zip, output_format="zip",
             db_conn=self._db_connection)
 
     def tearDown(self):
         self._db_connection.rollback()
         self._nsc.database.close()
         os.remove(self._test_contact)
+        os.remove(self._test_contact_zip)
+        os.remove(self._test_contact_inline)
 
     def test_geoip_reporting(self):
         '''Tests GeoIP reporting information'''
@@ -132,10 +149,9 @@ class TestIngests(unittest.TestCase):
         report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
                                               datetime.now(),
                                               db_conn=self._db_connection,
-                                              send=True,
-                                              csv_output=False)
+                                              send=True)
 
-        with open(self._test_contact, 'r') as f:
+        with open(self._test_contact_inline, 'r') as f:
             alert_email = f.read()
 
         self.assertIn("This is a snapshot of internet traffic broken down by destination IP", alert_email)
@@ -151,10 +167,30 @@ class TestIngests(unittest.TestCase):
         report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
                                               datetime.now(),
                                               db_conn=self._db_connection,
-                                              send=True,
-                                              csv_output=True)
+                                              send=True)
 
         with open(self._test_contact, 'r') as f:
+            alert_email = f.read()
+
+        self.assertIn("Attached to this email is a CSV breakdown of all traffic for the last 24 hours.", alert_email)
+
+        with open('/tmp/zip_email.eml', 'w') as f:
+            f.write(alert_email)
+
+    def test_email_report_zip(self):
+        '''Tests generation of email reports with CSV in a ZIP and such'''
+        tests.util.ingest_test_file(self, TRAFFIC_REPORT_LOG)
+
+        report_manager = ndr_server.TsharkTrafficReportManager(self._nsc,
+                                                               self._test_site,
+                                                               self._db_connection)
+
+        report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
+                                              datetime.now(),
+                                              db_conn=self._db_connection,
+                                              send=True)
+
+        with open(self._test_contact_zip, 'r') as f:
             alert_email = f.read()
 
         self.assertIn("Attached to this email is a CSV breakdown of all traffic for the last 24 hours.", alert_email)

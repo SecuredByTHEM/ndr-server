@@ -44,13 +44,13 @@ class TestContacts(unittest.TestCase):
     def test_create(self):
         '''Create an organization and make sure the procedural SQL don't go bang'''
         ndr_server.Contact.create(
-            self._nsc, self._test_org, "email", "mcasadevall@them.com",
+            self._nsc, self._test_org, "email", "mcasadevall@them.com", "csv",
             db_conn=self._db_connection)
 
     def test_get_by_id(self):
         '''Tests getting contacts by ID'''
         orig_contact = ndr_server.Contact.create(
-            self._nsc, self._test_org, "email", "mcasadevall2@them.com",
+            self._nsc, self._test_org, "email", "mcasadevall2@them.com", "zip",
             db_conn=self._db_connection)
         retrieved_contact = ndr_server.Contact.get_by_id(self._nsc, orig_contact.pg_id,
                                                          db_conn=self._db_connection)
@@ -58,6 +58,7 @@ class TestContacts(unittest.TestCase):
         self.assertEqual(orig_contact, retrieved_contact)
         self.assertEqual(retrieved_contact.method, ndr_server.ContactMethods.EMAIL)
         self.assertEqual(retrieved_contact.value, "mcasadevall2@them.com")
+        self.assertEqual(retrieved_contact.output_format, ndr_server.OutputFormats.ZIP)
 
     def test_expect_on_bad_read(self):
         '''Tests the expection in the storage procedure'''

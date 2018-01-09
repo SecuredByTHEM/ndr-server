@@ -132,6 +132,7 @@ if (defined $global_hostname_id) {
     my $register_proc = 'SELECT * FROM traffic_report.register_internet_hostname_from_tr($1, $2, $3)';
     my $register_sp = spi_prepare($register_proc, 'bigint', 'bigint', 'bigint');
     spi_exec_prepared($register_sp, $_[0], $global_ip_id, $global_hostname_id);
+    spi_freeplan($register_sp);
 }
 
 # Unlike PLPgSQL, inserting safely a bit more effort. We need to create an insert query plan, then
@@ -179,5 +180,5 @@ spi_exec_prepared($noi_insert_plan,
                   $city,
                   $isp,
                   $domain);
-
+spi_freeplan($noi_insert_plan);
 $$

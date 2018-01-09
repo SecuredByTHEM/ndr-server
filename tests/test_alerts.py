@@ -54,7 +54,7 @@ class TestAlerts(unittest.TestCase):
         os.close(file_descriptor) # Don't need to write anything to it
 
         ndr_server.Contact.create(
-            self._nsc, self._test_org, "file", self._test_contact,
+            self._nsc, self._test_org, "file", self._test_contact, "csv",
             db_conn=self._db_connection)
 
     def tearDown(self):

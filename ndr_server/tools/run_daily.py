@@ -59,7 +59,7 @@ def main():
                                               datetime.now(),
                                               db_conn=db_conn,
                                               send=True,
-                                              csv_output=True)
+                                              output_format='csv')
 
     db_conn.commit()
 

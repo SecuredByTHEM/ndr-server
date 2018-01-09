@@ -17,7 +17,7 @@
 from ndr_server.config import Config
 from ndr_server.organizations import Organization
 from ndr_server.db import Database
-from ndr_server.contacts import Contact, ContactMethods
+from ndr_server.contacts import Contact, ContactMethods, OutputFormats
 from ndr_server.sites import Site
 from ndr_server.recorder import Recorder
 from ndr_server.ingest import IngestServer

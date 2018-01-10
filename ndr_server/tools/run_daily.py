@@ -58,8 +58,7 @@ def main():
         report_manager.generate_report_emails(datetime.now() - timedelta(days=1),
                                               datetime.now(),
                                               db_conn=db_conn,
-                                              send=True,
-                                              output_format='csv')
+                                              send=True)
 
     db_conn.commit()
 

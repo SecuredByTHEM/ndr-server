@@ -123,7 +123,7 @@ $host_pp'''
 If not, check to see if any employee has connected a phone or similar device to your network without permission.
 
 $machine_text
-This alert will repeat once every four hours until the machine is either white-listed or removed from the network
+This alert will repeat once every five (5) minutes until the machine is either white-listed or removed from the network
 '''
 
 

@@ -112,6 +112,9 @@ class NetworkScan(object):
 
             unknown_host_objs.append(host_obj)
 
+        if len(unknown_host_objs) == 0:
+            return None
+
         return unknown_host_objs
 
     @staticmethod

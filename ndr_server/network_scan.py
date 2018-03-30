@@ -107,7 +107,7 @@ class NetworkScan(object):
             host_obj = ndr.NmapHost.from_dict(host_dict)
 
             # FIXME+HACK: Do not alert for IPv6 address only scans
-            if host_obj.mac_address is None and host_obj.addr.version == 6:
+            if host_obj.mac_address is None or host_obj.mac_address == '':
                 continue
 
             unknown_host_objs.append(host_obj)

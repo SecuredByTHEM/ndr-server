@@ -110,9 +110,9 @@ class UnknownMachineTemplate(BaseTemplate):
         BaseTemplate.__init__(self, organization, site, recorder, event_time)
 
         if len(hosts) == 1:
-            self.subject_text = "ALERT: Unknown Machine Detected At $site_name"
+            self.subject_text = "ALERT: Unknown Machine Detected At $site_name At $org_name"
         else:
-            self.subject_text = "ALERT: Unknown Machines Detected At $site_name"
+            self.subject_text = "ALERT: Unknown Machines Detected At $site_name At $org_name"
 
         self.hosts = hosts
         self.machine_info = '''
@@ -182,7 +182,7 @@ class SnortTrafficReportMessage(BaseTemplate):
     def __init__(self, organization, site, traffic_report):
         BaseTemplate.__init__(self, organization, site, None, None)
         self.traffic_report = traffic_report
-        self.subject_text = "Daily SNORT Traffic Report For Site $site_name"
+        self.subject_text = "Daily SNORT Traffic Report For Site $site_name At $org_name"
         self.message = '''This is a snapshot of internet traffic broken down by destination IP broken down by country, and regional subdivisions for the last 24 hours. GeoIP data is provided by GeoLite2 data available from MaxMind.
 
 Traffic Breakdown By Country

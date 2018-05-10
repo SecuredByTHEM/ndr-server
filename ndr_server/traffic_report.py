@@ -212,6 +212,9 @@ class TsharkTrafficReportManager(object):
                                send=True):
         '''Generates a report email breaking down traffic by country destination'''
 
+        # tr_email needs to be returned for the test suite to do it's job
+        tr_email = None
+
         if send is True:
             alert_contacts = self.organization.get_contacts(db_conn=db_conn)
 
@@ -244,7 +247,7 @@ class TsharkTrafficReportManager(object):
                     zip_buffer = io.BytesIO()
                     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
                         zip_file.writestr(filename, tr_email.csv_output_text)
-                    
+
                     attachment_tuple = [(zip_buffer.getvalue(), zip_archive, True)]
 
                 # And send it
